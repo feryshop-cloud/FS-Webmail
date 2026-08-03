@@ -16,6 +16,9 @@ imap-worker/.env
 imap-worker/.env.bak
 imap-worker/.env.backup
 
+# Catatan pribadi — berisi password (secret)
+catetan.md
+
 # Supabase local dev
 supabase/.env
 supabase/.temp/
