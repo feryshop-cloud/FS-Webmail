@@ -16,6 +16,9 @@ imap-worker/.env
 imap-worker/.env.bak
 imap-worker/.env.backup
 
+# Script operasional VPS sekali-pakai — mengandung password hardcoded & detail server
+imap-worker/execute_commands*.sh
+
 # Catatan pribadi — berisi password (secret)
 catetan.md
 
