@@ -10,10 +10,10 @@
 ## 0. IDENTITAS REPO INI (WAJIB DIISI MANUAL — BERBEDA DI SETIAP REPO)
 
 ```
-REPO_NAME        : [isi: ferryshop-webmail / ferryshop-dashboard-admin / ferryshop-web-public]
-PRD_RUJUKAN      : [isi: nama file PRD yang ada di root repo ini, contoh prd.md]
-PERAN_REPO_INI   : [isi 1 kalimat: deskripsi singkat tugas repo ini dalam ekosistem]
-TECH_STACK_WAJIB : [isi: ringkas dari Bab 2 PRD repo ini — Next.js App Router / dst]
+REPO_NAME        : ferryshop-webmail (WebMail)
+PRD_RUJUKAN      : ROADMAP_DEV.md / AI_GUARDRAILS.md
+PERAN_REPO_INI   : Aplikasi WebMail (Next.js) dan daemon background (imap-worker) untuk membaca inbox email, klasifikasi pesan & ekstrak OTP, serta eksekusi Edge Functions ganti password mailbox.
+TECH_STACK_WAJIB : Next.js 15 (App Router), Tailwind CSS, Supabase Client/Edge Functions, Node.js IMAP Worker
 ```
 
 > **Instruksi untuk AI:** Sebelum membaca instruksi apa pun di bawah, baca dulu isi Bab 0 ini dan file PRD yang dirujuk (`PRD_RUJUKAN`). Jika Bab 0 belum diisi atau file PRD tidak ditemukan, **HENTIKAN dan tanyakan ke pengguna** sebelum menulis kode apa pun — jangan menebak konteks repo dari nama folder saja.

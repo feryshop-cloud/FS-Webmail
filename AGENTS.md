@@ -454,3 +454,44 @@ Provide a structured review with:
 - **Long-Term Implications**: The long-term effects of the changes on maintainability and scalability.
 
 Remember: Good architecture enables change. Flag anything that makes future changes harder.
+
+---
+
+# FerryMail (WebMail) — Developer & Agent Guide
+
+## Overview & Architecture
+
+`WebMail` adalah layanan aplikasi web & background worker dalam ekosistem Ferryshop. Terdiri dari 2 bagian utama:
+1. **Storefront/Viewer (`WebMail` Next.js 15 App)**: Menampilkan antarmuka inbox publik tanpa login untuk membaca email yang masuk & OTP.
+2. **Background Daemon (`imap-worker`)**: Service berbasis Node.js yang berjalan di VPS untuk menghubungkan IMAP (Postfix/Dovecot), melakukan parse/klasifikasi email, ekstraksi OTP, dan menulis langsung ke Supabase terpusat.
+3. **Supabase Edge Functions (`supabase/functions/change-mailbox-password`)**: Function serverless untuk mereset/mengganti password mailbox via cPanel UAPI dengan verifikasi OTP dan rate-limiting.
+
+## Quick Commands (Windows PowerShell)
+
+```powershell
+# WebMail Next.js Frontend
+npm run dev                  # Jalankan dev server (http://localhost:3000)
+npm run build                # Production build
+npm run lint                 # Run ESLint
+
+# IMAP Worker
+cd imap-worker
+npm run dev                  # Start IMAP worker daemon (Development)
+npm run build                # Compile TypeScript to JS
+npm run start                # Start IMAP worker daemon (Production)
+
+# Supabase Edge Functions
+supabase functions deploy change-mailbox-password # Deploy function ke Supabase
+```
+
+## Structure
+
+- `app/` — Next.js 15 App Router pages (`/`, `/inbox/[email]`)
+- `components/` — UI components (InboxList, EmailCard, ChangePasswordModal)
+- `imap-worker/` — Node.js IMAP worker daemon
+  - `src/imap/` — IMAP connection handling
+  - `src/classification/` — Email classification & OTP extraction logic
+  - `src/supabase/` — Database integration & heartbeat
+- `supabase/functions/` — Supabase Edge Functions (`change-mailbox-password`)
+- `scripts/` — Maintenance scripts (`auto-purge.sh`)
+
