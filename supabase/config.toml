@@ -1,0 +1,6 @@
+[project]
+id = "ferryshop-webmail"
+name = "FerryMail"
+
+[functions.change-mailbox-password]
+verify_jwt = false

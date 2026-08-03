@@ -1,0 +1,25 @@
+{
+  "name": "imap-worker",
+  "version": "1.0.0",
+  "description": "FerryMail IMAP Worker",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "ts-node src/index.ts",
+    "dev": "ts-node-dev src/index.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.0.0",
+    "dotenv": "^16.0.0",
+    "imapflow": "^1.0.0",
+    "mailparser": "^3.0.0",
+    "ssh2": "^1.17.0",
+    "ws": "^8.21.0"
+  },
+  "devDependencies": {
+    "@types/mailparser": "^3.4.0",
+    "@types/node": "^20.0.0",
+    "@types/ws": "^8.18.1",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.0.0"
+  }
+}
