@@ -19,6 +19,10 @@ imap-worker/.env.backup
 # Script operasional VPS sekali-pakai — mengandung password hardcoded & detail server
 imap-worker/execute_commands*.sh
 
+# Debug/scratch one-off
+imap-worker/query_supabase.js
+imap-worker/test_net.js
+
 # Catatan pribadi — berisi password (secret)
 catetan.md
 
