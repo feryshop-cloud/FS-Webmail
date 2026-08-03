@@ -1,12 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { Button } from "./ui/Button";
-import { ChangePasswordModal } from "./ChangePasswordModal";
+import ChangePasswordModal from "./ChangePasswordModal";
 
 export function InboxHeader({ email, disabled }: { email: string; disabled: boolean }) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
   return (
     <header className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
@@ -15,20 +11,8 @@ export function InboxHeader({ email, disabled }: { email: string; disabled: bool
           Menerima pesan untuk <span className="font-medium text-slate-900 bg-white px-1.5 py-0.5 rounded border border-slate-200">{email}</span>
         </p>
       </div>
-      <Button 
-        variant="secondary" 
-        className="shrink-0" 
-        disabled={disabled}
-        onClick={() => setIsModalOpen(true)}
-      >
-        Ganti Password Email
-      </Button>
 
-      <ChangePasswordModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        email={email} 
-      />
+      <ChangePasswordModal recipientEmail={email} disabled={disabled} />
     </header>
   );
 }
