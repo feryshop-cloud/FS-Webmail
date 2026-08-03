@@ -2,6 +2,12 @@ packages:
   - '.'
   - 'imap-worker'
 
+allowBuilds:
+  cpu-features: set this to true or false
+  sharp: set this to true or false
+  ssh2: set this to true or false
+  unrs-resolver: set this to true or false
+
 onlyBuiltDependencies:
   - sharp
   - unrs-resolver
