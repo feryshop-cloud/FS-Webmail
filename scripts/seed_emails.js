@@ -1,11 +1,33 @@
+const fs = require('fs');
+const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
-require('dotenv').config({ path: '../imap-worker/.env' });
+
+// Simple .env parser without external dependencies
+function loadEnv(envPath) {
+  if (fs.existsSync(envPath)) {
+    const content = fs.readFileSync(envPath, 'utf-8');
+    content.split('\n').forEach(line => {
+      const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
+      if (match) {
+        const key = match[1];
+        let value = match[2] || '';
+        if (value.startsWith('"') && value.endsWith('"')) value = value.slice(1, -1);
+        if (value.startsWith("'") && value.endsWith("'")) value = value.slice(1, -1);
+        process.env[key] = value;
+      }
+    });
+  }
+}
+
+// Try loading from .env.local or imap-worker/.env
+loadEnv(path.join(__dirname, '../.env.local'));
+loadEnv(path.join(__dirname, '../imap-worker/.env'));
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
-  console.error('Error: NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set in WebMail/imap-worker/.env');
+  console.error('Error: NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (or ANON_KEY) must be set in .env.local or imap-worker/.env');
   process.exit(1);
 }
 
@@ -66,7 +88,7 @@ async function seed() {
     if (error) {
       console.error(`Failed to insert ${email.message_id}:`, error.message);
     } else {
-      console.log(`Inserted: ${email.subject} (${email.visibility})`);
+      console.log(`[SUCCESS] Inserted: ${email.subject} (${email.visibility})`);
     }
   }
 
