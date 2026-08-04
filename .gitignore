@@ -107,3 +107,16 @@ ehthumbs.db
 # sensitive env dumps
 .env.*.secret
 *credentials*
+
+# ============================================
+# AI Agent workspace artifacts
+# ============================================
+/.agents
+/.kiro
+/.opencode
+/.codex
+/.gemini
+/.antigravity
+/.kilo
+/.impeccable
+opencode.json

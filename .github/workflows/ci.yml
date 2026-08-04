@@ -1,0 +1,45 @@
+name: CI - WebMail & Worker (WebMail)
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  webmail-ci:
+    name: Build & Lint (WebMail Next.js App)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - name: Install WebMail dependencies
+        run: npm ci
+      - name: Run Lint
+        run: npm run lint
+      - name: Run Build
+        run: npm run build
+
+  imap-worker-ci:
+    name: Type-Check (IMAP Worker)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: imap-worker/package-lock.json
+      - name: Install imap-worker dependencies
+        defaults:
+          run:
+            working-directory: imap-worker
+        run: npm ci
+      - name: Type-check imap-worker
+        defaults:
+          run:
+            working-directory: imap-worker
+        run: npx tsc --noEmit
