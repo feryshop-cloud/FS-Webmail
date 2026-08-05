@@ -1,0 +1,29 @@
+# dependencies
+node_modules
+
+# build output
+.next
+out
+build
+dist
+
+# next types
+next-env.d.ts
+
+# typescript cache
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# env
+.env*
+.env.local
+
+# misc
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# generated lint report (UTF-16 encoded JSON)
+lint_results_remaining.json
+
+**/*.md

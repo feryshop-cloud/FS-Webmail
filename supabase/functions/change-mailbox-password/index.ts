@@ -18,21 +18,21 @@ const CPANEL_AUTH = Deno.env.get("CPANEL_AUTH") || ""; // API token WHM/cPanel
 
 async function checkRateLimitSQL(email: string, supabase: any): Promise<boolean> {
   const oneHourAgo = new Date(Date.now() - 3600000).toISOString();
-  
+
   // Ambil record rate limit dalam 1 jam terakhir
   const { data, error } = await supabase
-    .from('rate_limit_attempts')
-    .select('id, attempt_count')
-    .eq('email', email)
-    .gte('window_start', oneHourAgo)
-    .order('window_start', { ascending: false })
+    .from("rate_limit_attempts")
+    .select("id, attempt_count")
+    .eq("email", email)
+    .gte("window_start", oneHourAgo)
+    .order("window_start", { ascending: false })
     .limit(1)
     .single();
 
-  if (error && error.code !== 'PGRST116') {
+  if (error && error.code !== "PGRST116") {
     // Error selain Not Found
-    console.error('Rate limit query error:', error);
-    return false; 
+    console.error("Rate limit query error:", error);
+    return false;
   }
 
   if (data) {
@@ -41,15 +41,13 @@ async function checkRateLimitSQL(email: string, supabase: any): Promise<boolean>
     }
     // Update attempt count
     await supabase
-      .from('rate_limit_attempts')
+      .from("rate_limit_attempts")
       .update({ attempt_count: data.attempt_count + 1 })
-      .eq('id', data.id);
+      .eq("id", data.id);
     return true;
   } else {
     // Belum ada percobaan dalam 1 jam terakhir, buat baru
-    await supabase
-      .from('rate_limit_attempts')
-      .insert([{ email: email, attempt_count: 1 }]);
+    await supabase.from("rate_limit_attempts").insert([{ email: email, attempt_count: 1 }]);
     return true;
   }
 }
@@ -68,10 +66,7 @@ Deno.serve(async (req) => {
   }
 
   if (req.method !== "POST") {
-    return new Response(
-      JSON.stringify({ error: "Method not allowed" }),
-      { status: 405, headers }
-    );
+    return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers });
   }
 
   try {
@@ -80,27 +75,27 @@ Deno.serve(async (req) => {
 
     // --- Validasi payload ---
     if (!recipient_email || !otp_verification || !new_password) {
-      return new Response(
-        JSON.stringify({ error: "Missing required fields" }),
-        { status: 400, headers }
-      );
+      return new Response(JSON.stringify({ error: "Missing required fields" }), {
+        status: 400,
+        headers,
+      });
     }
 
     // Validasi format email
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailRegex.test(recipient_email)) {
-      return new Response(
-        JSON.stringify({ error: "Invalid email format" }),
-        { status: 400, headers }
-      );
+      return new Response(JSON.stringify({ error: "Invalid email format" }), {
+        status: 400,
+        headers,
+      });
     }
 
     // Validasi password min 8 karakter (FR-11)
     if (new_password.length < 8) {
-      return new Response(
-        JSON.stringify({ error: "Password must be at least 8 characters" }),
-        { status: 400, headers }
-      );
+      return new Response(JSON.stringify({ error: "Password must be at least 8 characters" }), {
+        status: 400,
+        headers,
+      });
     }
 
     // --- Inisialisasi Supabase client dengan service role key ---
@@ -108,10 +103,10 @@ Deno.serve(async (req) => {
 
     // --- Rate limiting SQL (FR-13) ---
     if (!(await checkRateLimitSQL(recipient_email, supabase))) {
-      return new Response(
-        JSON.stringify({ error: "Too many attempts. Try again in 1 hour." }),
-        { status: 429, headers }
-      );
+      return new Response(JSON.stringify({ error: "Too many attempts. Try again in 1 hour." }), {
+        status: 429,
+        headers,
+      });
     }
 
     // --- Cari otp_code TERBARU untuk recipient_email (FR-11) ---
@@ -127,18 +122,18 @@ Deno.serve(async (req) => {
       .single();
 
     if (queryError || !latestEmail) {
-      return new Response(
-        JSON.stringify({ error: "No OTP found for this email" }),
-        { status: 400, headers }
-      );
+      return new Response(JSON.stringify({ error: "No OTP found for this email" }), {
+        status: 400,
+        headers,
+      });
     }
 
     // --- Cocokkan OTP (FR-12) ---
     if (latestEmail.otp_code !== otp_verification) {
-      return new Response(
-        JSON.stringify({ error: "Verification code does not match" }),
-        { status: 400, headers }
-      );
+      return new Response(JSON.stringify({ error: "Verification code does not match" }), {
+        status: 400,
+        headers,
+      });
     }
 
     // --- Update password via cPanel UAPI ---
@@ -153,7 +148,7 @@ Deno.serve(async (req) => {
     const uapiResponse = await fetch(uapiUrl, {
       method: "GET",
       headers: {
-        "Authorization": `whm ${CPANEL_USER}:${CPANEL_AUTH}`,
+        Authorization: `whm ${CPANEL_USER}:${CPANEL_AUTH}`,
       },
     });
 
@@ -162,7 +157,7 @@ Deno.serve(async (req) => {
       console.error("cPanel UAPI error:", uapiError);
       return new Response(
         JSON.stringify({ error: "Failed to update password. Please try again." }),
-        { status: 500, headers }
+        { status: 500, headers },
       );
     }
 
@@ -171,7 +166,7 @@ Deno.serve(async (req) => {
     if (uapiResult.status !== 1) {
       return new Response(
         JSON.stringify({ error: uapiResult.errors?.[0] || "Password update failed" }),
-        { status: 500, headers }
+        { status: 500, headers },
       );
     }
 
@@ -187,14 +182,13 @@ Deno.serve(async (req) => {
         success: true,
         message: "Password updated successfully",
       }),
-      { status: 200, headers }
+      { status: 200, headers },
     );
-
   } catch (error) {
     console.error("Edge Function error:", error);
-    return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      { status: 500, headers }
-    );
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
+      status: 500,
+      headers,
+    });
   }
 });

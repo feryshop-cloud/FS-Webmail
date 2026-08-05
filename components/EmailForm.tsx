@@ -14,7 +14,7 @@ export function EmailForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email) {
       setError("Email tidak boleh kosong");
       return;
@@ -27,17 +27,15 @@ export function EmailForm() {
 
     setError("");
     setIsLoading(true);
-    
+
     // Redirect to inbox (Fase 4 akan menangani ini)
     router.push(`/inbox/${encodeURIComponent(email)}`);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full max-w-sm mx-auto">
-      <div className="flex flex-col gap-1.5 text-center mb-2">
-        <p className="text-sm text-slate-500">
-          Masukkan alamat email akun game yang kamu beli
-        </p>
+    <form onSubmit={handleSubmit} className="mx-auto flex w-full max-w-sm flex-col gap-4">
+      <div className="mb-2 flex flex-col gap-1.5 text-center">
+        <p className="text-sm text-slate-500">Masukkan alamat email akun game yang kamu beli</p>
       </div>
       <Input
         type="email"

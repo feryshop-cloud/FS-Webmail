@@ -1,18 +1,21 @@
 "use client";
 
-import { useState } from 'react';
-import { supabase } from '../lib/supabase/client';
-import { Key } from 'lucide-react';
+import { useState } from "react";
+import { supabase } from "../lib/supabase/client";
+import { Key } from "lucide-react";
 
 interface ChangePasswordModalProps {
   recipientEmail: string;
   disabled: boolean;
 }
 
-export default function ChangePasswordModal({ recipientEmail, disabled }: ChangePasswordModalProps) {
+export default function ChangePasswordModal({
+  recipientEmail,
+  disabled,
+}: ChangePasswordModalProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [otp, setOtp] = useState('');
-  const [newPassword, setNewPassword] = useState('');
+  const [otp, setOtp] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -24,23 +27,30 @@ export default function ChangePasswordModal({ recipientEmail, disabled }: Change
     setSuccess(null);
 
     try {
-      const { data, error: invokeError } = await supabase.functions.invoke('change-mailbox-password', {
-        body: { recipient_email: recipientEmail, otp_verification: otp, new_password: newPassword }
-      });
+      const { data, error: invokeError } = await supabase.functions.invoke(
+        "change-mailbox-password",
+        {
+          body: {
+            recipient_email: recipientEmail,
+            otp_verification: otp,
+            new_password: newPassword,
+          },
+        },
+      );
 
       if (invokeError) {
-        throw new Error(invokeError.message || 'Gagal mengubah password. Silakan coba lagi.');
+        throw new Error(invokeError.message || "Gagal mengubah password. Silakan coba lagi.");
       }
 
       if (data?.error) {
         throw new Error(data.error);
       }
 
-      setSuccess('Password berhasil diubah!');
-      setOtp('');
-      setNewPassword('');
+      setSuccess("Password berhasil diubah!");
+      setOtp("");
+      setNewPassword("");
     } catch (err: any) {
-      setError(err.message || 'Terjadi kesalahan');
+      setError(err.message || "Terjadi kesalahan");
     } finally {
       setLoading(false);
     }
@@ -50,8 +60,8 @@ export default function ChangePasswordModal({ recipientEmail, disabled }: Change
     setIsOpen(false);
     setError(null);
     setSuccess(null);
-    setOtp('');
-    setNewPassword('');
+    setOtp("");
+    setNewPassword("");
   };
 
   return (
@@ -59,7 +69,7 @@ export default function ChangePasswordModal({ recipientEmail, disabled }: Change
       <button
         onClick={() => setIsOpen(true)}
         disabled={disabled}
-        className="flex items-center justify-center gap-2 bg-blue-50 text-blue-600 hover:bg-blue-100 py-2 px-4 rounded-lg transition-colors text-sm font-medium focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed border border-blue-100"
+        className="flex items-center justify-center gap-2 rounded-lg border border-blue-100 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-100 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
       >
         <Key size={16} />
         Ganti Password
@@ -67,15 +77,15 @@ export default function ChangePasswordModal({ recipientEmail, disabled }: Change
 
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 px-4">
-          <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6">
-            <h2 className="text-xl font-bold text-slate-900 mb-4">Ganti Password Mailbox</h2>
-            
+          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-lg">
+            <h2 className="mb-4 text-xl font-bold text-slate-900">Ganti Password Mailbox</h2>
+
             {success ? (
               <div className="text-center">
-                <p className="text-emerald-600 mb-6 font-medium">{success}</p>
+                <p className="mb-6 font-medium text-emerald-600">{success}</p>
                 <button
                   onClick={closeModal}
-                  className="w-full py-2 px-4 border border-transparent rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+                  className="w-full rounded-lg border border-transparent bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
                 >
                   Tutup
                 </button>
@@ -83,7 +93,7 @@ export default function ChangePasswordModal({ recipientEmail, disabled }: Change
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                  <label className="mb-1 block text-sm font-medium text-slate-700">
                     Kode OTP Terakhir
                   </label>
                   <input
@@ -91,13 +101,13 @@ export default function ChangePasswordModal({ recipientEmail, disabled }: Change
                     required
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-600"
                     placeholder="Masukkan OTP dari email terakhir"
                   />
                 </div>
-                
+
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                  <label className="mb-1 block text-sm font-medium text-slate-700">
                     Password Baru
                   </label>
                   <input
@@ -106,30 +116,28 @@ export default function ChangePasswordModal({ recipientEmail, disabled }: Change
                     minLength={8}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-600"
                     placeholder="Minimal 8 karakter"
                   />
                 </div>
 
-                {error && (
-                  <p className="text-red-500 text-sm">{error}</p>
-                )}
+                {error && <p className="text-sm text-red-500">{error}</p>}
 
-                <div className="flex justify-end gap-3 mt-6">
+                <div className="mt-6 flex justify-end gap-3">
                   <button
                     type="button"
                     onClick={closeModal}
                     disabled={loading}
-                    className="py-2 px-4 border border-slate-300 rounded-lg text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-200 transition-colors"
+                    className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-200"
                   >
                     Batal
                   </button>
                   <button
                     type="submit"
                     disabled={loading}
-                    className="py-2 px-4 border border-transparent rounded-lg text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition-colors"
+                    className="rounded-lg border border-transparent bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 disabled:bg-blue-400"
                   >
-                    {loading ? 'Memproses...' : 'Ganti Password'}
+                    {loading ? "Memproses..." : "Ganti Password"}
                   </button>
                 </div>
               </form>

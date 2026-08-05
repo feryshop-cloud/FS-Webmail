@@ -1,6 +1,6 @@
 packages:
-  - '.'
-  - 'imap-worker'
+  - "."
+  - "imap-worker"
 
 allowBuilds:
   cpu-features: set this to true or false

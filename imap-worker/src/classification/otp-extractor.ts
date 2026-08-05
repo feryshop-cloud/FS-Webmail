@@ -5,7 +5,7 @@ export function extractOTP(textBody: string): string | null {
   if (match) {
     return match[1];
   }
-  
+
   const fallbackRegex = /\b\d{4,8}\b/;
   const fallbackMatch = textBody.match(fallbackRegex);
   return fallbackMatch ? fallbackMatch[0] : null;

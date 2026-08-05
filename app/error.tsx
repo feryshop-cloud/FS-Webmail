@@ -16,14 +16,15 @@ export default function ErrorPage({
   }, [error]);
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center p-4 bg-slate-50">
-      <div className="w-full max-w-md bg-white rounded-xl shadow-sm border border-slate-200 p-8 flex flex-col items-center text-center gap-4">
-        <div className="h-16 w-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-2">
+    <main className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-4">
+      <div className="flex w-full max-w-md flex-col items-center gap-4 rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+        <div className="mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-red-500">
           <AlertTriangle className="h-8 w-8" />
         </div>
-        <h2 className="text-2xl font-semibold text-slate-900 tracking-tight">Terjadi Kesalahan</h2>
-        <p className="text-sm text-slate-500 mb-4">
-          Maaf, terjadi masalah pada sistem kami saat memproses permintaan Anda. Silakan coba lagi beberapa saat lagi.
+        <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Terjadi Kesalahan</h2>
+        <p className="mb-4 text-sm text-slate-500">
+          Maaf, terjadi masalah pada sistem kami saat memproses permintaan Anda. Silakan coba lagi
+          beberapa saat lagi.
         </p>
         <Button onClick={() => reset()} variant="secondary">
           Coba Lagi
