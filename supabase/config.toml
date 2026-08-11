@@ -1,5 +1,5 @@
 [project]
-id = "ferryshop-webmail"
+id = "feryshop-webmail"
 name = "FerryMail"
 
 [functions.change-mailbox-password]

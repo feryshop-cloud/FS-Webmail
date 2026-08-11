@@ -41,7 +41,7 @@ async function seed() {
 
   const dummyEmails = [
     {
-      recipient_email: "test@ferryshop.com",
+      recipient_email: "test@feryshop.com",
       sender_email: "noreply@moonton.com",
       subject: "Mobile Legends Verification Code",
       message_id: "msg-001-moonton",
@@ -53,7 +53,7 @@ async function seed() {
       received_at: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
     },
     {
-      recipient_email: "test@ferryshop.com",
+      recipient_email: "test@feryshop.com",
       sender_email: "security@riotgames.com",
       subject: "Valorant Login Verification",
       message_id: "msg-002-valorant",
@@ -64,7 +64,7 @@ async function seed() {
       received_at: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
     },
     {
-      recipient_email: "test@ferryshop.com",
+      recipient_email: "test@feryshop.com",
       sender_email: "account-security-noreply@account.garena.com",
       subject: "Garena Authenticator Code",
       message_id: "msg-003-garena",
@@ -75,7 +75,7 @@ async function seed() {
       received_at: new Date().toISOString(),
     },
     {
-      recipient_email: "test@ferryshop.com",
+      recipient_email: "test@feryshop.com",
       sender_email: "billing@hetzner.com",
       subject: "Invoice #904124 Payment Receipt",
       message_id: "msg-004-hetzner",

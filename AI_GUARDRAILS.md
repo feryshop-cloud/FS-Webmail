@@ -1,16 +1,16 @@
-# AI Coding Guardrails — Ekosistem Ferryshop
+# AI Coding Guardrails — Ekosistem Feryshop
 
 **Versi Dokumen:** 1.0
 **Tujuan:** Dokumen ini dibaca AI **SEBELUM** menulis kode apa pun di repo ini. Tujuannya mencegah 2 jenis kegagalan paling umum saat AI vibe coding: (1) **Halusinasi** — AI mengarang struktur data, API, atau fitur yang tidak pernah didefinisikan; (2) **Genericness** — AI menghasilkan kode/desain "template SaaS pasaran" yang tidak mencerminkan konteks bisnis nyata project ini.
 
-> **Cara pakai:** Salin file ini ke root setiap repo (`ferryshop-webmail`, `dashboard-admin`, `web-public`). Isi Bab 0 secara manual sesuai repo masing-masing — sisanya (Bab 1-7) **JANGAN DIUBAH**, berlaku sama persis di ketiga repo.
+> **Cara pakai:** Salin file ini ke root setiap repo (`feryshop-webmail`, `dashboard-admin`, `web-public`). Isi Bab 0 secara manual sesuai repo masing-masing — sisanya (Bab 1-7) **JANGAN DIUBAH**, berlaku sama persis di ketiga repo.
 
 ---
 
 ## 0. IDENTITAS REPO INI (WAJIB DIISI MANUAL — BERBEDA DI SETIAP REPO)
 
 ```
-REPO_NAME        : ferryshop-webmail (WebMail)
+REPO_NAME        : feryshop-webmail (WebMail)
 PRD_RUJUKAN      : ROADMAP_DEV.md / AI_GUARDRAILS.md
 PERAN_REPO_INI   : Aplikasi WebMail (Next.js) dan daemon background (imap-worker) untuk membaca inbox email, klasifikasi pesan & ekstrak OTP, serta eksekusi Edge Functions ganti password mailbox.
 TECH_STACK_WAJIB : Next.js 15 (App Router), Tailwind CSS, Supabase Client/Edge Functions, Node.js IMAP Worker
@@ -26,7 +26,7 @@ Repo ini adalah **satu bagian** dari ekosistem yang terdiri dari 3 repository te
 
 ```
 ┌─────────────────────┐   ┌─────────────────────┐   ┌─────────────────────┐
-│  ferryshop-webmail     │   │  dashboard-admin       │   │  web-public            │
+│  feryshop-webmail     │   │  dashboard-admin       │   │  web-public            │
 │  (Vercel, publik,       │   │  (Vercel, private,      │   │  (Vercel, publik)        │
 │   tanpa login)           │   │   wajib login)            │   │                          │
 └──────────┬──────────┘   └──────────┬──────────┘   └──────────┬──────────┘
@@ -62,26 +62,26 @@ Repo ini adalah **satu bagian** dari ekosistem yang terdiri dari 3 repository te
 4. **Dilarang menebak versi library.** Selalu cek `package.json` yang sudah ada di repo sebelum menambah dependency baru. Jika belum ada `package.json`, gunakan versi stabil terbaru saat ini dan sebutkan versi yang dipasang.
 5. **Dilarang menambah fitur yang tidak ada di PRD**, meski "kelihatannya berguna" atau "biasanya ada di aplikasi serupa". Contoh: jangan tambahkan fitur "lupa password" custom dengan email reset jika PRD sudah eksplisit menentukan mekanisme verifikasi yang berbeda.
 6. **Jika PRD dan permintaan pengguna di chat saat ini bertentangan**, prioritaskan **konfirmasi ke pengguna** dibanding menebak mana yang benar. Jangan diam-diam memilih salah satu.
-7. **Dilarang berasumsi soal isi tabel di repo lain** yang tidak dijelaskan di PRD repo ini. Misal, jika sedang coding di `ferryshop-webmail` dan butuh tahu detail tabel yang dikelola `dashboard-admin`, rujuk ke bagian "Database Structure" yang relevan di PRD ini — jika tidak disebutkan, tanyakan, jangan mengarang struktur tabel tersebut.
+7. **Dilarang berasumsi soal isi tabel di repo lain** yang tidak dijelaskan di PRD repo ini. Misal, jika sedang coding di `feryshop-webmail` dan butuh tahu detail tabel yang dikelola `dashboard-admin`, rujuk ke bagian "Database Structure" yang relevan di PRD ini — jika tidak disebutkan, tanyakan, jangan mengarang struktur tabel tersebut.
 
 ---
 
 ## 3. ATURAN ANTI-GENERIK (UNIVERSAL)
 
-Tujuan bagian ini: mencegah hasil kode/desain terasa seperti "template AI generik" yang tidak mencerminkan konteks bisnis nyata Ferryshop.
+Tujuan bagian ini: mencegah hasil kode/desain terasa seperti "template AI generik" yang tidak mencerminkan konteks bisnis nyata Feryshop.
 
-1. **Dilarang memakai data dummy generik** seperti `John Doe`, `test@example.com`, `Lorem Ipsum`. Gunakan konteks bisnis nyata: `akun001@ferryshop.com`, "Mobile Legends", "Kode OTP", dst — sesuai domain project ini.
+1. **Dilarang memakai data dummy generik** seperti `John Doe`, `test@example.com`, `Lorem Ipsum`. Gunakan konteks bisnis nyata: `akun001@feryshop.com`, "Mobile Legends", "Kode OTP", dst — sesuai domain project ini.
 2. **Dilarang memakai palet warna default Tailwind/shadcn tanpa modifikasi** (`bg-blue-500` polos, gradient ungu-pink bawaan template SaaS). Selalu rujuk Design System spesifik yang ada di Bab 3 PRD repo ini (palet warna, border radius, ikon).
 3. **Dilarang menambahkan komentar kode generik** yang tidak menjelaskan apa-apa (`// helper function`, `// main logic`). Komentar harus menjelaskan **keputusan bisnis/teknis spesifik**, contoh: `// Filter visibility='buyer' wajib di sini agar email admin_only tidak pernah terkirim ke browser pembeli`.
 4. **Dilarang membuat struktur folder "default create-next-app"** tanpa menyesuaikan ke Folder Structure yang sudah ditentukan di PRD repo ini (lihat Bab 8/9 PRD masing-masing).
 5. **Dilarang menambahkan fitur "placeholder" yang umum di template** (misal halaman "About Us" generik, footer dengan link sosial media dummy) kecuali eksplisit diminta.
-6. **Setiap microcopy/teks UI harus dalam Bahasa Indonesia** yang natural dan sesuai konteks bisnis Ferryshop, bukan terjemahan harfiah dari template berbahasa Inggris.
+6. **Setiap microcopy/teks UI harus dalam Bahasa Indonesia** yang natural dan sesuai konteks bisnis Feryshop, bukan terjemahan harfiah dari template berbahasa Inggris.
 
 ---
 
 ## 4. ATURAN KEAMANAN LINTAS REPO (UNIVERSAL, MUTLAK)
 
-1. **`SUPABASE_SERVICE_ROLE_KEY` DILARANG KERAS** ada di environment variable, kode, atau bundle frontend repo `ferryshop-webmail`, `dashboard-admin`, maupun `web-public`. Key ini **HANYA** boleh hidup di: (a) Supabase Edge Function, (b) `imap-worker` di VPS.
+1. **`SUPABASE_SERVICE_ROLE_KEY` DILARANG KERAS** ada di environment variable, kode, atau bundle frontend repo `feryshop-webmail`, `dashboard-admin`, maupun `web-public`. Key ini **HANYA** boleh hidup di: (a) Supabase Edge Function, (b) `imap-worker` di VPS.
 2. **Setiap operasi mutasi sensitif** (ganti password, approve/withhold email, ubah lifecycle akun) **WAJIB** lewat Supabase Edge Function — tidak pernah langsung dari Supabase Client SDK di kode frontend, meski user sudah login sebagai admin.
 3. **Jangan pernah menonaktifkan RLS** pada tabel manapun "untuk mempermudah development" — jika RLS menyebabkan query gagal saat development, perbaiki policy-nya, jangan nonaktifkan tabelnya.
 4. **Setiap query yang menyentuh data milik pengguna lain** (misal `incoming_emails` berdasar `recipient_email`) wajib disertai filter eksplisit yang sesuai PRD (`visibility = 'buyer'`, dst) — tidak ada "ambil semua dulu, filter belakangan di frontend".

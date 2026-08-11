@@ -13,7 +13,7 @@ INSERT INTO public.incoming_emails (
     received_at
 ) VALUES 
 (
-    'test@ferryshop.com',
+    'test@feryshop.com',
     'noreply@moonton.com',
     'Mobile Legends Verification Code',
     'msg-001-moonton',
@@ -24,7 +24,7 @@ INSERT INTO public.incoming_emails (
     NOW() - INTERVAL '5 minutes'
 ),
 (
-    'test@ferryshop.com',
+    'test@feryshop.com',
     'security@riotgames.com',
     'Valorant Login Verification',
     'msg-002-valorant',
@@ -35,7 +35,7 @@ INSERT INTO public.incoming_emails (
     NOW() - INTERVAL '2 minutes'
 ),
 (
-    'test@ferryshop.com',
+    'test@feryshop.com',
     'account-security-noreply@account.garena.com',
     'Garena Authenticator Code',
     'msg-003-garena',
@@ -46,7 +46,7 @@ INSERT INTO public.incoming_emails (
     NOW()
 ),
 (
-    'test@ferryshop.com',
+    'test@feryshop.com',
     'billing@hetzner.com',
     'Invoice #904124 Payment Receipt',
     'msg-004-hetzner',

@@ -23,7 +23,7 @@ export default function LandingPage() {
           </div>
         </div>
 
-        <h1 className="mb-2 text-center text-2xl font-bold text-slate-900">Cek Email FerryShop</h1>
+        <h1 className="mb-2 text-center text-2xl font-bold text-slate-900">Cek Email FeryShop</h1>
         <p className="mb-8 text-center text-sm text-slate-500">
           Masukkan alamat email virtual Anda untuk melihat pesan masuk dan OTP secara real-time.
         </p>
@@ -39,7 +39,7 @@ export default function LandingPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="nama@ferryshop.com"
+              placeholder="nama@feryshop.com"
               className="w-full rounded-lg border border-slate-300 px-4 py-3 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-600"
             />
           </div>

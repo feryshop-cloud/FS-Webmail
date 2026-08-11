@@ -1,8 +1,8 @@
-# Roadmap Development — `ferryshop-webmail`
+# Roadmap Development — `feryshop-webmail`
 
 **Versi:** 1.0  
 **Status:** Aktif — Fokus saat ini  
-**Lingkup:** Coding aplikasi `ferryshop-webmail` saja. Fase VPS (Postfix, Dovecot, `imap-worker`) **belum dimulai** dan tidak masuk dokumen ini.  
+**Lingkup:** Coding aplikasi `feryshop-webmail` saja. Fase VPS (Postfix, Dovecot, `imap-worker`) **belum dimulai** dan tidak masuk dokumen ini.  
 **Referensi wajib:** `prd.md` · `AI_GUARDRAILS.md`
 
 > **Cara pakai roadmap ini:**
@@ -20,7 +20,7 @@ Setup     Types    Landing  Inbox    Realtime  Ganti    Polish
 Proyek    & DB     Page     Page     + Copy    Password & Final
 ```
 
-Semua fase dikerjakan di **satu repositori**: `ferryshop-webmail`.  
+Semua fase dikerjakan di **satu repositori**: `feryshop-webmail`.  
 Tidak ada ketergantungan ke VPS atau `imap-worker` — kita gunakan **Supabase dengan data dummy/seed** untuk testing lokal sampai imap-worker siap nantinya.
 
 ---
@@ -31,7 +31,7 @@ Tidak ada ketergantungan ke VPS atau `imap-worker` — kita gunakan **Supabase d
 
 ### Yang dikerjakan:
 1. Inisialisasi project Next.js 15 (App Router) + TypeScript
-   - Perintah: `npx create-next-app@latest ferryshop-webmail --typescript --tailwind --app --src-dir no --import-alias "@/*"`
+   - Perintah: `npx create-next-app@latest feryshop-webmail --typescript --tailwind --app --src-dir no --import-alias "@/*"`
 2. Pasang dependency wajib:
    - `@supabase/supabase-js` — database client
    - `lucide-react` — ikon utama
@@ -159,7 +159,7 @@ Tidak ada ketergantungan ke VPS atau `imap-worker` — kita gunakan **Supabase d
    - Pass data ke `InboxList` (Client Component, dibuat di Fase 5)
 
 ### Output yang bisa diverifikasi:
-- Buka `/inbox/akun001@ferryshop.com` (ganti dengan email yang ada di seed data)
+- Buka `/inbox/akun001@feryshop.com` (ganti dengan email yang ada di seed data)
 - Data dari Supabase tampil sebagai kartu
 - Data `admin_only` TIDAK muncul (verifikasi dengan seed data)
 - Empty state muncul jika inbox kosong
@@ -316,7 +316,7 @@ Tidak ada ketergantungan ke VPS atau `imap-worker` — kita gunakan **Supabase d
 
 ## Setelah Fase 7 Selesai: Lanjut ke VPS
 
-Setelah `ferryshop-webmail` selesai dan berfungsi dengan data seed, barulah kita masuk ke fase VPS:
+Setelah `feryshop-webmail` selesai dan berfungsi dengan data seed, barulah kita masuk ke fase VPS:
 - Setup Postfix + Dovecot di VPS klien
 - Coding `imap-worker` (Node.js) sesuai `prd-imap-worker.md`
 - Koneksi end-to-end: email masuk dari game → Dovecot → imap-worker → Supabase → FerryMail tampil real-time

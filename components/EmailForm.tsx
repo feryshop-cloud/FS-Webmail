@@ -39,7 +39,7 @@ export function EmailForm() {
       </div>
       <Input
         type="email"
-        placeholder="contoh: akun001@ferryshop.com"
+        placeholder="contoh: akun001@feryshop.com"
         value={email}
         onChange={(e) => {
           setEmail(e.target.value);

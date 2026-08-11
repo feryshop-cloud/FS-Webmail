@@ -5,7 +5,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Ferryshop Webmail | Cek OTP",
+  title: "Feryshop Webmail | Cek OTP",
   description: "Portal pengecekan OTP mandiri",
 };
 
