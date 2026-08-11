@@ -7,6 +7,7 @@ export default async function InboxPage({ params }: { params: Promise<{ email: s
   const email = decodeURIComponent(resolvedParams.email);
   const supabase = createSupabaseServerClient();
 
+  console.log(`[InboxPage] Fetching inbox for email: ${email}`);
   const { data: initialEmails, error } = await supabase
     .from("incoming_emails")
     .select("*")
@@ -14,6 +15,12 @@ export default async function InboxPage({ params }: { params: Promise<{ email: s
     .eq("visibility", "buyer")
     .order("received_at", { ascending: false })
     .limit(30);
+
+  if (error) {
+    console.error(`[InboxPage] Error fetching inbox for ${email}:`, error);
+  } else {
+    console.log(`[InboxPage] Fetched ${initialEmails?.length || 0} emails for ${email}`);
+  }
 
   const emails = initialEmails || [];
   const isInboxEmpty = emails.length === 0;
