@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Input } from "./ui/Input";
 import { Button } from "./ui/Button";
 import { validateEmail } from "@/lib/utils";
+import { checkEmailAccountExists } from "@/app/actions/email";
 
 export function EmailForm() {
   const [email, setEmail] = useState("");
@@ -12,10 +13,10 @@ export function EmailForm() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!email) {
+    if (!email.trim()) {
       setError("Email tidak boleh kosong");
       return;
     }
@@ -28,8 +29,20 @@ export function EmailForm() {
     setError("");
     setIsLoading(true);
 
-    // Redirect to inbox (Fase 4 akan menangani ini)
-    router.push(`/inbox/${encodeURIComponent(email)}`);
+    try {
+      const result = await checkEmailAccountExists(email);
+      if (!result.exists) {
+        setError(result.message || "Email tidak ditemukan di database.");
+        setIsLoading(false);
+        return;
+      }
+
+      router.push(`/inbox/${encodeURIComponent(email.trim().toLowerCase())}`);
+    } catch (err) {
+      console.error(err);
+      setError("Terjadi kesalahan saat mengecek akun email.");
+      setIsLoading(false);
+    }
   };
 
   return (
