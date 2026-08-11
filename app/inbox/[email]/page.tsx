@@ -1,10 +1,19 @@
+import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "../../../lib/supabase/server";
+import { isMailboxAuthorized } from "../../actions/email";
 import InboxList from "../../../components/InboxList";
 import ChangePasswordModal from "../../../components/ChangePasswordModal";
 
 export default async function InboxPage({ params }: { params: Promise<{ email: string }> }) {
   const resolvedParams = await params;
   const email = decodeURIComponent(resolvedParams.email);
+
+  // Enforce PIN authorization check
+  const authorized = await isMailboxAuthorized(email);
+  if (!authorized) {
+    redirect("/?error=unauthorized");
+  }
+
   const supabase = createSupabaseServerClient();
 
   console.log(`[InboxPage] Fetching inbox for email: ${email}`);

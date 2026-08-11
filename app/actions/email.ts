@@ -1,39 +1,83 @@
 "use server";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 
-export async function checkEmailAccountExists(
+export async function verifyMailboxAccess(
   email: string,
-): Promise<{ exists: boolean; message?: string }> {
+  pin: string,
+): Promise<{ success: boolean; message?: string }> {
   if (!email || !email.includes("@")) {
-    return { exists: false, message: "Format alamat email tidak valid." };
+    return { success: false, message: "Format alamat email tidak valid." };
+  }
+
+  if (!pin || pin.trim().length === 0) {
+    return { success: false, message: "PIN Akses / Password Mailbox wajib diisi." };
   }
 
   const cleanEmail = email.trim().toLowerCase();
+  const cleanPin = pin.trim();
   const supabase = createSupabaseServerClient();
 
   const { data, error } = await supabase
     .from("email_accounts")
-    .select("id")
+    .select("id, email, access_pin, is_active")
     .eq("email", cleanEmail)
     .eq("is_active", true)
     .maybeSingle();
 
   if (error) {
-    console.error("Error checking email_accounts existence:", error);
+    console.error("Error verifying mailbox access:", error);
     return {
-      exists: false,
-      message: "Terjadi kesalahan sistem saat mengecek alamat email.",
+      success: false,
+      message: "Terjadi kesalahan sistem saat memverifikasi akun.",
     };
   }
 
   if (!data) {
     return {
-      exists: false,
+      success: false,
       message:
         "Alamat email tidak ditemukan di database Feryshop. Pastikan email akun yang Anda masukkan benar.",
     };
   }
 
-  return { exists: true };
+  const expectedPin = data.access_pin || "123456";
+  if (cleanPin !== expectedPin) {
+    return {
+      success: false,
+      message: "PIN Akses / Password Mailbox salah. Harap periksa nota transaksi Anda.",
+    };
+  }
+
+  // Set HTTP-only authorization cookie for this mailbox
+  const cookieStore = await cookies();
+  const cookieName = `mailbox_auth_${Buffer.from(cleanEmail).toString("hex")}`;
+
+  cookieStore.set(cookieName, "authorized", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 60 * 60 * 24 * 7, // 7 days
+    path: "/",
+  });
+
+  return { success: true };
+}
+
+export async function isMailboxAuthorized(email: string): Promise<boolean> {
+  if (!email) return false;
+  const cleanEmail = email.trim().toLowerCase();
+  const cookieStore = await cookies();
+  const cookieName = `mailbox_auth_${Buffer.from(cleanEmail).toString("hex")}`;
+  const authCookie = cookieStore.get(cookieName);
+  return authCookie?.value === "authorized";
+}
+
+export async function revokeMailboxAccess(email: string): Promise<void> {
+  if (!email) return;
+  const cleanEmail = email.trim().toLowerCase();
+  const cookieStore = await cookies();
+  const cookieName = `mailbox_auth_${Buffer.from(cleanEmail).toString("hex")}`;
+  cookieStore.delete(cookieName);
 }
