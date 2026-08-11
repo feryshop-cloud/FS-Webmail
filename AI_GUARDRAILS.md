@@ -85,6 +85,8 @@ Tujuan bagian ini: mencegah hasil kode/desain terasa seperti "template AI generi
 2. **Setiap operasi mutasi sensitif** (ganti password, approve/withhold email, ubah lifecycle akun) **WAJIB** lewat Supabase Edge Function — tidak pernah langsung dari Supabase Client SDK di kode frontend, meski user sudah login sebagai admin.
 3. **Jangan pernah menonaktifkan RLS** pada tabel manapun "untuk mempermudah development" — jika RLS menyebabkan query gagal saat development, perbaiki policy-nya, jangan nonaktifkan tabelnya.
 4. **Setiap query yang menyentuh data milik pengguna lain** (misal `incoming_emails` berdasar `recipient_email`) wajib disertai filter eksplisit yang sesuai PRD (`visibility = 'buyer'`, dst) — tidak ada "ambil semua dulu, filter belakangan di frontend".
+5. **Verifikasi kepemilikan email** pada operasi ganti password mailbox wajib memvalidasi `deal_number` transaksi yang sah atas alamat email terkait di database untuk mencegah pembajakan oleh pihak ketiga.
+6. **Transmisi password** ke API cPanel/WHM wajib menggunakan POST request body (URLSearchParams), dilarang dikirim melalui GET query string demi mencegah pencatatan password dalam plain-text di log server.
 
 ---
 

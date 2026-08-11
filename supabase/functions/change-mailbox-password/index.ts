@@ -71,10 +71,10 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { recipient_email, otp_verification, new_password } = body;
+    const { recipient_email, otp_verification, deal_number, new_password } = body;
 
     // --- Validasi payload ---
-    if (!recipient_email || !otp_verification || !new_password) {
+    if (!recipient_email || !otp_verification || !deal_number || !new_password) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
         status: 400,
         headers,
@@ -100,6 +100,31 @@ Deno.serve(async (req) => {
 
     // --- Inisialisasi Supabase client dengan service role key ---
     const supabase = createClient(SB_URL, SB_SERVICE_ROLE_KEY);
+
+    // --- Verifikasi Nomor Transaksi / Deal Number ---
+    const { data: dealCheck, error: dealError } = await supabase
+      .from("deals")
+      .select(
+        `
+        id,
+        deal_items!inner(
+          stocks!inner(
+            username
+          )
+        )
+      `,
+      )
+      .eq("deal_number", deal_number)
+      .eq("deal_items.stocks.username", recipient_email)
+      .maybeSingle();
+
+    if (dealError || !dealCheck) {
+      console.error("Deal verification failed or error:", dealError);
+      return new Response(JSON.stringify({ error: "Invalid transaction number for this email" }), {
+        status: 403,
+        headers,
+      });
+    }
 
     // --- Rate limiting SQL (FR-13) ---
     if (!(await checkRateLimitSQL(recipient_email, supabase))) {
@@ -141,15 +166,20 @@ Deno.serve(async (req) => {
     const emailUser = recipient_email.split("@")[0];
     const domain = recipient_email.split("@")[1];
 
-    // Panggil cPanel UAPI untuk ganti password
-    // Endpoint: https://202.10.40.94:2083/execute/Email/passwd_pop
-    const uapiUrl = `https://202.10.40.94:2083/execute/Email/passwd_pop?email=${encodeURIComponent(emailUser)}&password=${encodeURIComponent(new_password)}&domain=${encodeURIComponent(domain)}`;
+    // Panggil cPanel UAPI untuk ganti password (menggunakan POST untuk keamanan)
+    const uapiUrl = `https://202.10.40.94:2083/execute/Email/passwd_pop`;
+    const formData = new URLSearchParams();
+    formData.append("email", emailUser);
+    formData.append("password", new_password);
+    formData.append("domain", domain);
 
     const uapiResponse = await fetch(uapiUrl, {
-      method: "GET",
+      method: "POST",
       headers: {
         Authorization: `whm ${CPANEL_USER}:${CPANEL_AUTH}`,
+        "Content-Type": "application/x-www-form-urlencoded",
       },
+      body: formData.toString(),
     });
 
     if (!uapiResponse.ok) {

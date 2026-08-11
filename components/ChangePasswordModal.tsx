@@ -15,6 +15,7 @@ export default function ChangePasswordModal({
 }: ChangePasswordModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [otp, setOtp] = useState("");
+  const [dealNumber, setDealNumber] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,6 +34,7 @@ export default function ChangePasswordModal({
           body: {
             recipient_email: recipientEmail,
             otp_verification: otp,
+            deal_number: dealNumber,
             new_password: newPassword,
           },
         },
@@ -48,6 +50,7 @@ export default function ChangePasswordModal({
 
       setSuccess("Password berhasil diubah!");
       setOtp("");
+      setDealNumber("");
       setNewPassword("");
     } catch (err: any) {
       setError(err.message || "Terjadi kesalahan");
@@ -61,6 +64,7 @@ export default function ChangePasswordModal({
     setError(null);
     setSuccess(null);
     setOtp("");
+    setDealNumber("");
     setNewPassword("");
   };
 
@@ -92,6 +96,20 @@ export default function ChangePasswordModal({
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-slate-700">
+                    Nomor Transaksi (Deal Number)
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={dealNumber}
+                    onChange={(e) => setDealNumber(e.target.value)}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    placeholder="Contoh: DEAL-12345678"
+                  />
+                </div>
+
                 <div>
                   <label className="mb-1 block text-sm font-medium text-slate-700">
                     Kode OTP Terakhir
