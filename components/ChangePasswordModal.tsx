@@ -14,9 +14,8 @@ export default function ChangePasswordModal({
   disabled,
 }: ChangePasswordModalProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [otp, setOtp] = useState("");
-  const [dealNumber, setDealNumber] = useState("");
-  const [newPassword, setNewPassword] = useState("");
+  const [oldPin, setOldPin] = useState("");
+  const [newPin, setNewPin] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -27,15 +26,20 @@ export default function ChangePasswordModal({
     setError(null);
     setSuccess(null);
 
+    if (!/^\d{6}$/.test(oldPin) || !/^\d{6}$/.test(newPin)) {
+      setError("PIN harus 6 digit angka.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const { data, error: invokeError } = await supabase.functions.invoke(
         "change-mailbox-password",
         {
           body: {
             recipient_email: recipientEmail,
-            otp_verification: otp,
-            deal_number: dealNumber,
-            new_password: newPassword,
+            old_pin: oldPin,
+            new_pin: newPin,
           },
         },
       );
@@ -49,9 +53,8 @@ export default function ChangePasswordModal({
       }
 
       setSuccess("Pin berhasil diubah!");
-      setOtp("");
-      setDealNumber("");
-      setNewPassword("");
+      setOldPin("");
+      setNewPin("");
     } catch (err: any) {
       setError(err.message || "Terjadi kesalahan");
     } finally {
@@ -63,9 +66,8 @@ export default function ChangePasswordModal({
     setIsOpen(false);
     setError(null);
     setSuccess(null);
-    setOtp("");
-    setDealNumber("");
-    setNewPassword("");
+    setOldPin("");
+    setNewPin("");
   };
 
   return (
@@ -98,29 +100,18 @@ export default function ChangePasswordModal({
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="mb-1 block text-sm font-medium text-slate-700">
-                    Nomor Transaksi (Deal Number)
+                    PIN Lama
                   </label>
                   <input
-                    type="text"
+                    type="password"
                     required
-                    value={dealNumber}
-                    onChange={(e) => setDealNumber(e.target.value)}
+                    inputMode="numeric"
+                    maxLength={6}
+                    pattern="[0-9]{6}"
+                    value={oldPin}
+                    onChange={(e) => setOldPin(e.target.value)}
                     className="w-full rounded-lg border border-slate-300 px-3 py-2 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-600"
-                    placeholder="Contoh: DEAL-12345678"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">
-                    Kode OTP Terakhir
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-600"
-                    placeholder="Masukkan OTP dari email terakhir"
+                    placeholder="PIN 6 digit saat ini"
                   />
                 </div>
 
@@ -131,11 +122,13 @@ export default function ChangePasswordModal({
                   <input
                     type="password"
                     required
-                    minLength={8}
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
+                    inputMode="numeric"
+                    maxLength={6}
+                    pattern="[0-9]{6}"
+                    value={newPin}
+                    onChange={(e) => setNewPin(e.target.value)}
                     className="w-full rounded-lg border border-slate-300 px-3 py-2 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-600"
-                    placeholder="Minimal 8 karakter"
+                    placeholder="6 digit angka"
                   />
                 </div>
 

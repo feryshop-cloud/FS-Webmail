@@ -1,12 +1,12 @@
 // Supabase Edge Function: change-mailbox-password
-// Referensi: prd.md Bab 4.2, FR-11 s/d FR-15
 //
 // Tugas:
 // 1. Validasi payload
-// 2. Cocokkan otp_verification dengan otp_code TERBARU di incoming_emails
+// 2. Cocokkan old_pin dengan access_pin di email_accounts (bukti kepemilikan mailbox)
 // 3. Rate limiting: max 5x/jam per email
-// 4. Jika cocok -> update password via cPanel UAPI
-// 5. Return success atau error
+// 4. Jika cocok -> update password via cPanel UAPI dengan new_pin
+// 5. Update access_pin di email_accounts
+// 6. Return success atau error
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -71,10 +71,10 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { recipient_email, otp_verification, deal_number, new_password } = body;
+    const { recipient_email, old_pin, new_pin } = body;
 
     // --- Validasi payload ---
-    if (!recipient_email || !otp_verification || !deal_number || !new_password) {
+    if (!recipient_email || !old_pin || !new_pin) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
         status: 400,
         headers,
@@ -90,9 +90,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Validasi password min 8 karakter (FR-11)
-    if (new_password.length < 8) {
-      return new Response(JSON.stringify({ error: "Password must be at least 8 characters" }), {
+    // Validasi PIN lama & baru: 6 digit numerik
+    const pinRegex = /^\d{6}$/;
+    if (!pinRegex.test(old_pin) || !pinRegex.test(new_pin)) {
+      return new Response(JSON.stringify({ error: "PIN must be 6 digits" }), {
         status: 400,
         headers,
       });
@@ -101,62 +102,34 @@ Deno.serve(async (req) => {
     // --- Inisialisasi Supabase client dengan service role key ---
     const supabase = createClient(SB_URL, SB_SERVICE_ROLE_KEY);
 
-    // --- Verifikasi Nomor Transaksi / Deal Number ---
-    const { data: dealCheck, error: dealError } = await supabase
-      .from("deals")
-      .select(
-        `
-        id,
-        deal_items!inner(
-          stocks!inner(
-            username
-          )
-        )
-      `,
-      )
-      .eq("deal_number", deal_number)
-      .eq("deal_items.stocks.username", recipient_email)
+    // --- Verifikasi PIN lama (bukti kepemilikan mailbox) ---
+    const { data: account, error: accError } = await supabase
+      .from("email_accounts")
+      .select("email, access_pin, is_active")
+      .eq("email", recipient_email)
+      .eq("is_active", true)
       .maybeSingle();
 
-    if (dealError || !dealCheck) {
-      console.error("Deal verification failed or error:", dealError);
-      return new Response(JSON.stringify({ error: "Invalid transaction number for this email" }), {
+    if (accError || !account) {
+      console.error("Email account verification failed:", accError);
+      return new Response(JSON.stringify({ error: "Email account not found or inactive" }), {
         status: 403,
         headers,
       });
     }
 
-    // --- Rate limiting SQL (FR-13) ---
+    const expectedPin = account.access_pin || "123456";
+    if (old_pin !== expectedPin) {
+      return new Response(JSON.stringify({ error: "Old PIN does not match" }), {
+        status: 403,
+        headers,
+      });
+    }
+
+    // --- Rate limiting SQL ---
     if (!(await checkRateLimitSQL(recipient_email, supabase))) {
       return new Response(JSON.stringify({ error: "Too many attempts. Try again in 1 hour." }), {
         status: 429,
-        headers,
-      });
-    }
-
-    // --- Cari otp_code TERBARU untuk recipient_email (FR-11) ---
-    // Hanya email dengan visibility = 'buyer' dan category = 'login_otp'
-    const { data: latestEmail, error: queryError } = await supabase
-      .from("incoming_emails")
-      .select("otp_code, received_at")
-      .eq("recipient_email", recipient_email)
-      .eq("visibility", "buyer")
-      .eq("category", "login_otp")
-      .order("received_at", { ascending: false })
-      .limit(1)
-      .single();
-
-    if (queryError || !latestEmail) {
-      return new Response(JSON.stringify({ error: "No OTP found for this email" }), {
-        status: 400,
-        headers,
-      });
-    }
-
-    // --- Cocokkan OTP (FR-12) ---
-    if (latestEmail.otp_code !== otp_verification) {
-      return new Response(JSON.stringify({ error: "Verification code does not match" }), {
-        status: 400,
         headers,
       });
     }
@@ -170,7 +143,7 @@ Deno.serve(async (req) => {
     const uapiUrl = `https://202.10.40.94:2083/execute/Email/passwd_pop`;
     const formData = new URLSearchParams();
     formData.append("email", emailUser);
-    formData.append("password", new_password);
+    formData.append("password", new_pin);
     formData.append("domain", domain);
 
     const uapiResponse = await fetch(uapiUrl, {
@@ -200,17 +173,17 @@ Deno.serve(async (req) => {
       );
     }
 
-    // --- Update timestamp di mailbox_accounts (opsional) ---
+    // --- Update access_pin di email_accounts agar verifikasi berikutnya konsisten ---
     await supabase
-      .from("mailbox_accounts")
-      .update({ updated_at: new Date().toISOString() })
+      .from("email_accounts")
+      .update({ access_pin: new_pin, updated_at: new Date().toISOString() })
       .eq("email", recipient_email);
 
-    // --- Return success (FR-11) ---
+    // --- Return success ---
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Password updated successfully",
+        message: "PIN updated successfully",
       }),
       { status: 200, headers },
     );
