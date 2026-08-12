@@ -8,5 +8,7 @@ export interface Email {
   raw_body_snippet?: string | null;
   category?: "otp" | "billing" | "general" | string;
   visibility?: "buyer" | "admin_only" | string;
+  is_read?: boolean;
+  is_archived?: boolean;
   received_at: string;
 }

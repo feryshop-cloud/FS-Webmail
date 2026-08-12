@@ -23,7 +23,7 @@ export default async function InboxPage({ params }: { params: Promise<{ email: s
     .eq("recipient_email", email)
     .eq("visibility", "buyer")
     .order("received_at", { ascending: false })
-    .limit(30);
+    .limit(200);
 
   if (error) {
     console.error(`[InboxPage] Error fetching inbox for ${email}:`, error);
