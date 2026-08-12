@@ -41,14 +41,14 @@ export default function ChangePasswordModal({
       );
 
       if (invokeError) {
-        throw new Error(invokeError.message || "Gagal mengubah password. Silakan coba lagi.");
+        throw new Error(invokeError.message || "Gagal mengubah pin. Silakan coba lagi.");
       }
 
       if (data?.error) {
         throw new Error(data.error);
       }
 
-      setSuccess("Password berhasil diubah!");
+      setSuccess("Pin berhasil diubah!");
       setOtp("");
       setDealNumber("");
       setNewPassword("");
@@ -76,13 +76,13 @@ export default function ChangePasswordModal({
         className="flex items-center justify-center gap-2 rounded-lg border border-blue-100 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-100 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
       >
         <Key size={16} />
-        Ganti Password
+        Ganti Pin
       </button>
 
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 px-4">
           <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-lg">
-            <h2 className="mb-4 text-xl font-bold text-slate-900">Ganti Password Mailbox</h2>
+            <h2 className="mb-4 text-xl font-bold text-slate-900">Ganti Pin Mailbox</h2>
 
             {success ? (
               <div className="text-center">
@@ -126,7 +126,7 @@ export default function ChangePasswordModal({
 
                 <div>
                   <label className="mb-1 block text-sm font-medium text-slate-700">
-                    Password Baru
+                    PIN Baru
                   </label>
                   <input
                     type="password"
@@ -155,7 +155,7 @@ export default function ChangePasswordModal({
                     disabled={loading}
                     className="rounded-lg border border-transparent bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 disabled:bg-blue-400"
                   >
-                    {loading ? "Memproses..." : "Ganti Password"}
+                    {loading ? "Memproses..." : "Ganti Pin"}
                   </button>
                 </div>
               </form>
