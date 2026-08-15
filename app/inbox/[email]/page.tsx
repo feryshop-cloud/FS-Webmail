@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "../../../lib/supabase/server";
 import { isMailboxAuthorized } from "../../actions/email";
+import { logger } from "../../../lib/logger";
 import InboxList from "../../../components/InboxList";
 import ChangePasswordModal from "../../../components/ChangePasswordModal";
 
@@ -16,7 +17,7 @@ export default async function InboxPage({ params }: { params: Promise<{ email: s
 
   const supabase = createSupabaseServerClient();
 
-  console.log(`[InboxPage] Fetching inbox for email: ${email}`);
+  logger.info("Fetching inbox", { email, context: "InboxPage" });
   const { data: initialEmails, error } = await supabase
     .from("incoming_emails")
     .select("*")
@@ -26,9 +27,13 @@ export default async function InboxPage({ params }: { params: Promise<{ email: s
     .limit(200);
 
   if (error) {
-    console.error(`[InboxPage] Error fetching inbox for ${email}:`, error);
+    logger.error("Error fetching inbox", { email, context: "InboxPage", err: error });
   } else {
-    console.log(`[InboxPage] Fetched ${initialEmails?.length || 0} emails for ${email}`);
+    logger.info("Fetched inbox", {
+      email,
+      context: "InboxPage",
+      count: initialEmails?.length || 0,
+    });
   }
 
   const emails = initialEmails || [];

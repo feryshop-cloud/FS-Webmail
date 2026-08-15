@@ -1,12 +1,12 @@
 /**
- * Structured Logger for imap-worker daemon — pino-based.
+ * Structured Logger for WebMail (FerryMail) — pino-based.
  * Emits pino payload: numeric `level`, epoch-ms `time`, `pid`, `hostname`,
- * `service`, `environment`, `msg`, plus custom meta.
+ * `service`, `environment`, `msg`, plus custom meta (err/error serialized).
  */
 import pino, { type Logger, type LoggerOptions } from "pino";
 import os from "node:os";
 
-type LogLevel = "debug" | "info" | "warn" | "error";
+export type LogLevel = "debug" | "info" | "warn" | "error";
 
 const LOG_LEVEL_RANK: Record<LogLevel, number> = {
   debug: 10,
@@ -43,7 +43,7 @@ function serializeError(error: unknown): unknown {
   return error;
 }
 
-const SERVICE = "imap-worker";
+const SERVICE = "WebMail";
 
 function createLogger(): Logger {
   const options: LoggerOptions = {
@@ -79,16 +79,16 @@ function write(level: LogLevel, message: string, meta?: Record<string, unknown>)
 }
 
 export const logger = {
-  debug(message: string, meta?: any) {
+  debug(message: string, meta?: Record<string, unknown>) {
     write("debug", message, meta);
   },
-  info(message: string, meta?: any) {
+  info(message: string, meta?: Record<string, unknown>) {
     write("info", message, meta);
   },
-  warn(message: string, meta?: any) {
+  warn(message: string, meta?: Record<string, unknown>) {
     write("warn", message, meta);
   },
-  error(message: string, meta?: any) {
+  error(message: string, meta?: Record<string, unknown>) {
     write("error", message, meta);
   },
   serializeError,

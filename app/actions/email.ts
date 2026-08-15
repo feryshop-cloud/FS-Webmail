@@ -1,6 +1,7 @@
 "use server";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { logger } from "@/lib/logger";
 import { cookies } from "next/headers";
 
 export async function verifyMailboxAccess(
@@ -27,7 +28,11 @@ export async function verifyMailboxAccess(
     .maybeSingle();
 
   if (error) {
-    console.error("Error verifying mailbox access:", error);
+    logger.error("Error verifying mailbox access", {
+      context: "ServerAction: verifyMailboxAccess",
+      err: error,
+      email: cleanEmail,
+    });
     return {
       success: false,
       message: "Terjadi kesalahan sistem saat memverifikasi akun.",
