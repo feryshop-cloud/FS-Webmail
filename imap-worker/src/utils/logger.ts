@@ -4,7 +4,6 @@
  * `service`, `environment`, `msg`, plus custom meta.
  */
 import pino, { type Logger, type LoggerOptions } from "pino";
-import os from "node:os";
 
 type LogLevel = "debug" | "info" | "warn" | "error";
 
@@ -29,15 +28,20 @@ function serializeError(error: unknown): unknown {
     };
     if (error.stack) result.stack = error.stack;
     if ("code" in error) result.code = (error as { code?: unknown }).code;
+    if (error.cause !== undefined && error.cause !== null) {
+      result.cause = serializeError(error.cause);
+    }
     return result;
   }
   if (typeof error === "object" && error !== null) {
     const e = error as { name?: unknown; message?: unknown; stack?: unknown };
     if (e.message !== undefined || e.stack !== undefined) {
-      return {
+      const result: Record<string, unknown> = {
         type: typeof e.name === "string" ? e.name : "Error",
         message: e.message,
       };
+      if (e.stack) result.stack = e.stack;
+      return result;
     }
   }
   return error;
@@ -48,12 +52,10 @@ const SERVICE = "imap-worker";
 function createLogger(): Logger {
   const options: LoggerOptions = {
     level: resolveLogLevel(),
-    base: {
-      pid: process.pid,
-      hostname: os.hostname(),
+    mixin: () => ({
       service: SERVICE,
       environment: process.env.NODE_ENV ?? "development",
-    },
+    }),
     timestamp: pino.stdTimeFunctions.epochTime,
     serializers: {
       err: serializeError,

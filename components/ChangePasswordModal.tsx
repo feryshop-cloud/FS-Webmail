@@ -55,8 +55,8 @@ export default function ChangePasswordModal({
       setSuccess("Pin berhasil diubah!");
       setOldPin("");
       setNewPin("");
-    } catch (err: any) {
-      setError(err.message || "Terjadi kesalahan");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Terjadi kesalahan");
     } finally {
       setLoading(false);
     }

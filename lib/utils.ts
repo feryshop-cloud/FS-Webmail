@@ -37,7 +37,7 @@ export function formatRelativeTime(dateString: string): string {
 export function extractEmailParam(encoded: string): string {
   try {
     return decodeURIComponent(encoded);
-  } catch (e) {
+  } catch {
     return encoded;
   }
 }
