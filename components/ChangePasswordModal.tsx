@@ -99,9 +99,7 @@ export default function ChangePasswordModal({
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">
-                    PIN Lama
-                  </label>
+                  <label className="mb-1 block text-sm font-medium text-slate-700">PIN Lama</label>
                   <input
                     type="password"
                     required
@@ -116,9 +114,7 @@ export default function ChangePasswordModal({
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">
-                    PIN Baru
-                  </label>
+                  <label className="mb-1 block text-sm font-medium text-slate-700">PIN Baru</label>
                   <input
                     type="password"
                     required

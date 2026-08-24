@@ -149,9 +149,7 @@ describe("formatLog", () => {
 
   it("serializes Error in meta under err key when key is error", () => {
     const err = new Error("fail");
-    const parsed = JSON.parse(
-      formatLog("error", "oops", { error: err }, { service: "s" }),
-    );
+    const parsed = JSON.parse(formatLog("error", "oops", { error: err }, { service: "s" }));
     expect(parsed.err).toBeDefined();
     expect(parsed.err.type).toBe("Error");
     expect(parsed.err.message).toBe("fail");
@@ -160,9 +158,7 @@ describe("formatLog", () => {
 
   it("serializes Error values in other meta keys", () => {
     const err = new TypeError("bad");
-    const parsed = JSON.parse(
-      formatLog("error", "oops", { cause: err }, { service: "s" }),
-    );
+    const parsed = JSON.parse(formatLog("error", "oops", { cause: err }, { service: "s" }));
     expect(parsed.cause.type).toBe("TypeError");
     expect(parsed.cause.message).toBe("bad");
   });

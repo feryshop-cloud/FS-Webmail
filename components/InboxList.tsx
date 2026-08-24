@@ -94,7 +94,10 @@ export default function InboxList({ recipientEmail, initialEmails }: InboxListPr
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
         <div className="relative w-full sm:max-w-xs">
-          <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            size={16}
+          />
           <input
             type="text"
             value={query}
@@ -143,8 +146,10 @@ export default function InboxList({ recipientEmail, initialEmails }: InboxListPr
           <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs text-slate-500">
               Menampilkan {startIndex + 1}
-              {filtered.length > 1 ? `–${Math.min(startIndex + PAGE_SIZE, filtered.length)}` : ""} dari{" "}
-              {filtered.length} pesan
+              {filtered.length > 1
+                ? `–${Math.min(startIndex + PAGE_SIZE, filtered.length)}`
+                : ""}{" "}
+              dari {filtered.length} pesan
             </p>
             <div className="flex items-center gap-2">
               <button
