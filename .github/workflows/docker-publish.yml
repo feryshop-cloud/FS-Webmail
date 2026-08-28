@@ -75,4 +75,3 @@ jobs:
             docker compose -f docker-compose.prod.yml pull webmail
             docker compose -f docker-compose.prod.yml up -d --no-deps webmail
             docker image prune -f
-

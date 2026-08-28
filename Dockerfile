@@ -1,13 +1,11 @@
 # 1. Base stage
-FROM node:22-alpine AS base
+FROM oven/bun:1.4-alpine AS base
 WORKDIR /app
-RUN apk add --no-cache libc6-compat
-RUN corepack enable && corepack prepare pnpm@9 --activate
 
 # 2. Dependencies stage
 FROM base AS deps
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
 
 # 3. Builder stage
 FROM base AS builder
@@ -18,7 +16,7 @@ COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 
-RUN pnpm build
+RUN bun run build
 
 # 4. Production Runner stage
 FROM node:22-alpine AS runner
