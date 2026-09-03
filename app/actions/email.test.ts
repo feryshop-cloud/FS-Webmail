@@ -18,7 +18,8 @@ vi.mock("@/lib/logger", () => ({
   },
 }));
 
-import { getMailboxPinStatus, verifyMailboxAccess } from "@/app/actions/email";
+import { getMailboxPinStatus, isMailboxAuthorized, verifyMailboxAccess } from "@/app/actions/email";
+import { verifyMailboxAuthToken } from "@/lib/auth/signed-token";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
 
@@ -76,7 +77,7 @@ describe("verifyMailboxAccess", () => {
     expect(store.set).toHaveBeenCalledTimes(1);
     const [name, value] = (store.set as ReturnType<typeof vi.fn>).mock.calls[0];
     expect(name).toContain("mailbox_auth_");
-    expect(value).toBe("authorized");
+    expect(await verifyMailboxAuthToken("user@example.com", value)).toBe(true);
   });
 
   it("handles supabase error", async () => {
@@ -90,7 +91,7 @@ describe("verifyMailboxAccess", () => {
     mockSupabase(null);
     const res = await verifyMailboxAccess("unknown@example.com", "123456");
     expect(res.success).toBe(false);
-    expect(res.message).toContain("tidak ditemukan");
+    expect(res.message).toContain("tidak valid");
   });
 
   it("rejects wrong pin when pin is enabled", async () => {
@@ -102,7 +103,7 @@ describe("verifyMailboxAccess", () => {
     expect(res.message).toContain("PIN");
   });
 
-  it("accepts correct pin and sets auth cookie", async () => {
+  it("accepts correct pin and sets signed HMAC auth cookie", async () => {
     mockSupabase([
       { email: "user@example.com", access_pin: "123456", is_active: true, is_pin_enabled: true },
     ]);
@@ -113,7 +114,7 @@ describe("verifyMailboxAccess", () => {
     expect(store.set).toHaveBeenCalledTimes(1);
     const [name, value, options] = (store.set as ReturnType<typeof vi.fn>).mock.calls[0];
     expect(name).toContain("mailbox_auth_");
-    expect(value).toBe("authorized");
+    expect(await verifyMailboxAuthToken("user@example.com", value)).toBe(true);
     expect(options).toMatchObject({ httpOnly: true, path: "/", sameSite: "lax" });
   });
 
@@ -123,6 +124,28 @@ describe("verifyMailboxAccess", () => {
     ]);
     const res = await verifyMailboxAccess("user@example.com", "123456");
     expect(res.success).toBe(true);
+  });
+});
+
+describe("isMailboxAuthorized - Cookie Forgery Prevention", () => {
+  it("rejects forged static 'authorized' cookie", async () => {
+    const store = { get: vi.fn().mockReturnValue({ value: "authorized" }) };
+    (cookies as ReturnType<typeof vi.fn>).mockResolvedValue(store);
+
+    const isAuth = await isMailboxAuthorized("victim@feryshop.com");
+    expect(isAuth).toBe(false);
+  });
+
+  it("rejects cookie with invalid HMAC signature", async () => {
+    const store = {
+      get: vi
+        .fn()
+        .mockReturnValue({ value: "eyJlbWFpbCI6InZpY3RpbUBmZXJ5c2hvcC5jb20ifQ.fake-signature" }),
+    };
+    (cookies as ReturnType<typeof vi.fn>).mockResolvedValue(store);
+
+    const isAuth = await isMailboxAuthorized("victim@feryshop.com");
+    expect(isAuth).toBe(false);
   });
 });
 

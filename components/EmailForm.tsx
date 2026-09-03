@@ -66,7 +66,7 @@ export function EmailForm() {
       <div>
         <Input
           type="password"
-          placeholder="PIN Akses (default: 123456 / kosongkan jika dinonaktifkan)"
+          placeholder="Masukkan PIN Akses"
           value={pin}
           onChange={(e) => {
             setPin(e.target.value);
@@ -76,7 +76,7 @@ export function EmailForm() {
           disabled={isLoading}
         />
         <p className="mt-1 text-[11px] text-slate-400">
-          Default PIN: <strong>123456</strong>. Kosongkan jika proteksi PIN dinonaktifkan manual.
+          Masukkan PIN yang tertera pada nota transaksi pembelian akun Anda.
         </p>
       </div>
       <Button type="submit" isLoading={isLoading} className="w-full">

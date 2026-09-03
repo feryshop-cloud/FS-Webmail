@@ -196,9 +196,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Verifikasi PIN lama jika PIN saat ini aktif
-    if (account.is_pin_enabled !== false && old_pin !== expectedPin) {
-      return new Response(JSON.stringify({ error: "PIN lama tidak sesuai" }), {
+    // Verifikasi PIN: Baik PIN sedang aktif maupun nonaktif, operasi mutasi sensitif
+    // penggantian password cPanel & penetapan PIN baru WAJIB memverifikasi bukti kepemilikan (old_pin === expectedPin).
+    if (old_pin !== expectedPin) {
+      return new Response(JSON.stringify({ error: "PIN verifikasi tidak sesuai" }), {
         status: 403,
         headers,
       });

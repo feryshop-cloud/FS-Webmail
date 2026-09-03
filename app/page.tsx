@@ -81,7 +81,6 @@ export default function LandingPage() {
               <label htmlFor="pin" className="block text-sm font-medium text-slate-700">
                 PIN Akses / Password Mailbox
               </label>
-              <span className="text-xs text-slate-400">Default: 123456</span>
             </div>
             <div className="relative">
               <input
@@ -93,14 +92,13 @@ export default function LandingPage() {
                   setPin(e.target.value);
                   if (error) setError(null);
                 }}
-                placeholder="PIN Akses (kosongkan jika dinonaktifkan)"
+                placeholder="Masukkan PIN Akses"
                 className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-600 disabled:bg-slate-100 disabled:opacity-75"
               />
               <Lock className="absolute right-3 top-3.5 h-4 w-4 text-slate-400" />
             </div>
             <p className="mt-1.5 text-[11px] text-slate-400">
-              Gunakan PIN transaksi (default: <strong>123456</strong>). Jika proteksi PIN telah
-              dinonaktifkan manual, kolom ini dapat dikosongkan.
+              Masukkan PIN yang tertera pada nota transaksi pembelian akun Anda.
             </p>
           </div>
 

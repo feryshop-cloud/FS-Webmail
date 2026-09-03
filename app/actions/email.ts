@@ -3,6 +3,8 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { logger } from "@/lib/logger";
 import { cookies } from "next/headers";
+import { signMailboxAuthToken, verifyMailboxAuthToken } from "@/lib/auth/signed-token";
+import { checkRateLimit, recordFailedAttempt, resetRateLimit } from "@/lib/rate-limit";
 
 export async function verifyMailboxAccess(
   email: string,
@@ -14,6 +16,21 @@ export async function verifyMailboxAccess(
 
   const cleanEmail = email.trim().toLowerCase();
   const cleanPin = (pin || "").trim();
+
+  // 1. Rate Limiting Check (max 5 failed attempts per 10 minutes)
+  const rateLimitKey = `auth:${cleanEmail}`;
+  const rateLimitStatus = checkRateLimit(rateLimitKey);
+  if (!rateLimitStatus.allowed) {
+    logger.warn("Mailbox access rate limited", {
+      email: cleanEmail,
+      retryAfterSeconds: rateLimitStatus.retryAfterSeconds,
+    });
+    return {
+      success: false,
+      message: `Terlalu banyak percobaan gagal. Silakan coba lagi dalam ${rateLimitStatus.retryAfterSeconds} detik.`,
+    };
+  }
+
   const supabase = createSupabaseServerClient();
 
   const { data, error } = await supabase
@@ -36,10 +53,10 @@ export async function verifyMailboxAccess(
   }
 
   if (!data) {
+    recordFailedAttempt(rateLimitKey);
     return {
       success: false,
-      message:
-        "Alamat email tidak ditemukan di database Feryshop. Pastikan email akun yang Anda masukkan benar.",
+      message: "Email atau PIN Akses tidak valid. Pastikan alamat email yang Anda masukkan benar.",
     };
   }
 
@@ -47,14 +64,16 @@ export async function verifyMailboxAccess(
 
   if (isPinEnabled) {
     if (!cleanPin) {
+      recordFailedAttempt(rateLimitKey);
       return {
         success: false,
-        message: "Alamat email ini membutuhkan PIN Akses / Password.",
+        message: "Alamat email ini membutuhkan PIN Akses. Silakan masukkan PIN transaksi Anda.",
       };
     }
 
     const expectedPin = data.access_pin || "123456";
     if (cleanPin !== expectedPin) {
+      recordFailedAttempt(rateLimitKey);
       return {
         success: false,
         message: "PIN Akses / Password Mailbox salah. Harap periksa nota transaksi Anda.",
@@ -62,11 +81,15 @@ export async function verifyMailboxAccess(
     }
   }
 
-  // Set HTTP-only authorization cookie for this mailbox
+  // Verification succeeded -> reset failed attempt counter
+  resetRateLimit(rateLimitKey);
+
+  // Set HTTP-only, HMAC-signed authorization cookie for this mailbox
   const cookieStore = await cookies();
   const cookieName = `mailbox_auth_${Buffer.from(cleanEmail).toString("hex")}`;
+  const signedToken = await signMailboxAuthToken(cleanEmail);
 
-  cookieStore.set(cookieName, "authorized", {
+  cookieStore.set(cookieName, signedToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
@@ -110,7 +133,8 @@ export async function isMailboxAuthorized(email: string): Promise<boolean> {
   const cookieStore = await cookies();
   const cookieName = `mailbox_auth_${Buffer.from(cleanEmail).toString("hex")}`;
   const authCookie = cookieStore.get(cookieName);
-  return authCookie?.value === "authorized";
+
+  return await verifyMailboxAuthToken(cleanEmail, authCookie?.value);
 }
 
 export async function revokeMailboxAccess(email: string): Promise<void> {
