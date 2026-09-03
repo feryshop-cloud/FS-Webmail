@@ -39,6 +39,16 @@ export default async function InboxPage({ params }: { params: Promise<{ email: s
   const emails = initialEmails || [];
   const isInboxEmpty = emails.length === 0;
 
+  // Check PIN protection status for this mailbox
+  const { data: accountData } = await supabase
+    .from("email_accounts")
+    .select("is_pin_enabled")
+    .eq("email", email)
+    .maybeSingle();
+
+  const initialPinEnabled =
+    (accountData as { is_pin_enabled?: boolean | null } | null)?.is_pin_enabled !== false;
+
   return (
     <div className="min-h-screen bg-slate-50 px-4 py-8">
       <div className="mx-auto flex max-w-3xl flex-col gap-6">
@@ -49,7 +59,11 @@ export default async function InboxPage({ params }: { params: Promise<{ email: s
             </h2>
             <h1 className="break-all text-2xl font-bold text-slate-900">{email}</h1>
           </div>
-          <ChangePasswordModal recipientEmail={email} disabled={isInboxEmpty} />
+          <ChangePasswordModal
+            recipientEmail={email}
+            disabled={isInboxEmpty}
+            initialPinEnabled={initialPinEnabled}
+          />
         </div>
 
         <InboxList recipientEmail={email} initialEmails={emails} />

@@ -71,17 +71,17 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
+    const action = body.action || "change_pin";
     const { recipient_email, old_pin, new_pin } = body;
 
-    // --- Validasi payload ---
-    if (!recipient_email || !old_pin || !new_pin) {
-      return new Response(JSON.stringify({ error: "Missing required fields" }), {
+    // --- Validasi format email ---
+    if (!recipient_email) {
+      return new Response(JSON.stringify({ error: "Missing recipient_email" }), {
         status: 400,
         headers,
       });
     }
 
-    // Validasi format email
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailRegex.test(recipient_email)) {
       return new Response(JSON.stringify({ error: "Invalid email format" }), {
@@ -90,22 +90,13 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Validasi PIN lama & baru: 6 digit numerik
-    const pinRegex = /^\d{6}$/;
-    if (!pinRegex.test(old_pin) || !pinRegex.test(new_pin)) {
-      return new Response(JSON.stringify({ error: "PIN must be 6 digits" }), {
-        status: 400,
-        headers,
-      });
-    }
-
     // --- Inisialisasi Supabase client dengan service role key ---
     const supabase = createClient(SB_URL, SB_SERVICE_ROLE_KEY);
 
-    // --- Verifikasi PIN lama (bukti kepemilikan mailbox) ---
+    // --- Ambil data akun email ---
     const { data: account, error: accError } = await supabase
       .from("email_accounts")
-      .select("email, access_pin, is_active")
+      .select("email, access_pin, is_active, is_pin_enabled")
       .eq("email", recipient_email)
       .eq("is_active", true)
       .maybeSingle();
@@ -119,12 +110,7 @@ Deno.serve(async (req) => {
     }
 
     const expectedPin = account.access_pin || "123456";
-    if (old_pin !== expectedPin) {
-      return new Response(JSON.stringify({ error: "Old PIN does not match" }), {
-        status: 403,
-        headers,
-      });
-    }
+    const pinRegex = /^\d{6}$/;
 
     // --- Rate limiting SQL ---
     if (!(await checkRateLimitSQL(recipient_email, supabase))) {
@@ -134,56 +120,142 @@ Deno.serve(async (req) => {
       });
     }
 
-    // --- Update password via cPanel UAPI ---
-    // Extract username dari email (akun001@feryshop.com -> akun001)
-    const emailUser = recipient_email.split("@")[0];
-    const domain = recipient_email.split("@")[1];
+    // --- AKSI: NONAKTIFKAN PIN SECARA MANUAL ---
+    if (action === "disable_pin") {
+      // Jika PIN saat ini aktif, wajib verifikasi PIN lama sebagai bukti kepemilikan
+      if (account.is_pin_enabled !== false) {
+        if (!old_pin) {
+          return new Response(
+            JSON.stringify({ error: "PIN saat ini wajib diisi untuk menonaktifkan proteksi." }),
+            {
+              status: 400,
+              headers,
+            },
+          );
+        }
+        if (old_pin !== expectedPin) {
+          return new Response(JSON.stringify({ error: "PIN saat ini salah." }), {
+            status: 403,
+            headers,
+          });
+        }
+      }
 
-    // Panggil cPanel UAPI untuk ganti password (menggunakan POST untuk keamanan)
-    const uapiUrl = `https://202.10.40.94:2083/execute/Email/passwd_pop`;
-    const formData = new URLSearchParams();
-    formData.append("email", emailUser);
-    formData.append("password", new_pin);
-    formData.append("domain", domain);
+      await supabase
+        .from("email_accounts")
+        .update({ is_pin_enabled: false, updated_at: new Date().toISOString() })
+        .eq("email", recipient_email);
 
-    const uapiResponse = await fetch(uapiUrl, {
-      method: "POST",
-      headers: {
-        Authorization: `whm ${CPANEL_USER}:${CPANEL_AUTH}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: formData.toString(),
-    });
-
-    if (!uapiResponse.ok) {
-      const uapiError = await uapiResponse.text();
-      console.error("cPanel UAPI error:", uapiError);
       return new Response(
-        JSON.stringify({ error: "Failed to update password. Please try again." }),
-        { status: 500, headers },
+        JSON.stringify({
+          success: true,
+          message:
+            "Proteksi PIN berhasil dinonaktifkan manual. WebMail kini dapat diakses tanpa PIN.",
+          is_pin_enabled: false,
+        }),
+        { status: 200, headers },
       );
     }
 
-    const uapiResult = await uapiResponse.json();
+    // --- AKSI: AKTIFKAN KEMBALI PIN ---
+    if (action === "enable_pin") {
+      const activePin = new_pin && pinRegex.test(new_pin) ? new_pin : expectedPin || "123456";
 
-    if (uapiResult.status !== 1) {
+      await supabase
+        .from("email_accounts")
+        .update({
+          is_pin_enabled: true,
+          access_pin: activePin,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("email", recipient_email);
+
       return new Response(
-        JSON.stringify({ error: uapiResult.errors?.[0] || "Password update failed" }),
-        { status: 500, headers },
+        JSON.stringify({
+          success: true,
+          message: `Proteksi PIN berhasil diaktifkan dengan PIN: ${activePin}.`,
+          is_pin_enabled: true,
+          access_pin: activePin,
+        }),
+        { status: 200, headers },
       );
     }
 
-    // --- Update access_pin di email_accounts agar verifikasi berikutnya konsisten ---
+    // --- AKSI: GANTI PIN (STANDAR) ---
+    if (!old_pin || !new_pin) {
+      return new Response(JSON.stringify({ error: "Missing required fields (old_pin, new_pin)" }), {
+        status: 400,
+        headers,
+      });
+    }
+
+    if (!pinRegex.test(old_pin) || !pinRegex.test(new_pin)) {
+      return new Response(JSON.stringify({ error: "PIN must be 6 digits" }), {
+        status: 400,
+        headers,
+      });
+    }
+
+    // Verifikasi PIN lama jika PIN saat ini aktif
+    if (account.is_pin_enabled !== false && old_pin !== expectedPin) {
+      return new Response(JSON.stringify({ error: "PIN lama tidak sesuai" }), {
+        status: 403,
+        headers,
+      });
+    }
+
+    // Update password via cPanel UAPI jika kredensial tersedia
+    if (CPANEL_AUTH) {
+      const emailUser = recipient_email.split("@")[0];
+      const domain = recipient_email.split("@")[1];
+      const uapiUrl = `https://202.10.40.94:2083/execute/Email/passwd_pop`;
+      const formData = new URLSearchParams();
+      formData.append("email", emailUser);
+      formData.append("password", new_pin);
+      formData.append("domain", domain);
+
+      const uapiResponse = await fetch(uapiUrl, {
+        method: "POST",
+        headers: {
+          Authorization: `whm ${CPANEL_USER}:${CPANEL_AUTH}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: formData.toString(),
+      });
+
+      if (!uapiResponse.ok) {
+        const uapiError = await uapiResponse.text();
+        console.error("cPanel UAPI error:", uapiError);
+        return new Response(
+          JSON.stringify({ error: "Failed to update cPanel password. Please try again." }),
+          { status: 500, headers },
+        );
+      }
+
+      const uapiResult = await uapiResponse.json();
+      if (uapiResult.status !== 1) {
+        return new Response(
+          JSON.stringify({ error: uapiResult.errors?.[0] || "Password update failed" }),
+          { status: 500, headers },
+        );
+      }
+    }
+
+    // Update access_pin & ensure is_pin_enabled: true
     await supabase
       .from("email_accounts")
-      .update({ access_pin: new_pin, updated_at: new Date().toISOString() })
+      .update({
+        access_pin: new_pin,
+        is_pin_enabled: true,
+        updated_at: new Date().toISOString(),
+      })
       .eq("email", recipient_email);
 
-    // --- Return success ---
     return new Response(
       JSON.stringify({
         success: true,
-        message: "PIN updated successfully",
+        message: "PIN berhasil diperbarui.",
+        is_pin_enabled: true,
       }),
       { status: 200, headers },
     );

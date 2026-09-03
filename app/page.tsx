@@ -14,7 +14,7 @@ export default function LandingPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || !pin.trim()) return;
+    if (!email.trim()) return;
 
     setError(null);
     setIsLoading(true);
@@ -81,23 +81,27 @@ export default function LandingPage() {
               <label htmlFor="pin" className="block text-sm font-medium text-slate-700">
                 PIN Akses / Password Mailbox
               </label>
+              <span className="text-xs text-slate-400">Default: 123456</span>
             </div>
             <div className="relative">
               <input
                 id="pin"
                 type="password"
-                required
                 disabled={isLoading}
                 value={pin}
                 onChange={(e) => {
                   setPin(e.target.value);
                   if (error) setError(null);
                 }}
-                placeholder="Masukkan PIN Akses (misal: 123456)"
+                placeholder="PIN Akses (kosongkan jika dinonaktifkan)"
                 className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-600 disabled:bg-slate-100 disabled:opacity-75"
               />
               <Lock className="absolute right-3 top-3.5 h-4 w-4 text-slate-400" />
             </div>
+            <p className="mt-1.5 text-[11px] text-slate-400">
+              Gunakan PIN transaksi (default: <strong>123456</strong>). Jika proteksi PIN telah
+              dinonaktifkan manual, kolom ini dapat dikosongkan.
+            </p>
           </div>
 
           <button

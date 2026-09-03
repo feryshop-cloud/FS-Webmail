@@ -18,7 +18,7 @@ vi.mock("@/lib/logger", () => ({
   },
 }));
 
-import { verifyMailboxAccess } from "@/app/actions/email";
+import { getMailboxPinStatus, verifyMailboxAccess } from "@/app/actions/email";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
 
@@ -56,11 +56,27 @@ describe("verifyMailboxAccess", () => {
     expect(createSupabaseServerClient).not.toHaveBeenCalled();
   });
 
-  it("rejects empty pin", async () => {
+  it("rejects empty pin when is_pin_enabled is true", async () => {
+    mockSupabase([
+      { email: "user@example.com", access_pin: "123456", is_active: true, is_pin_enabled: true },
+    ]);
     const res = await verifyMailboxAccess("user@example.com", "   ");
     expect(res.success).toBe(false);
-    expect(res.message).toContain("PIN");
-    expect(createSupabaseServerClient).not.toHaveBeenCalled();
+    expect(res.message).toContain("membutuhkan PIN Akses");
+  });
+
+  it("accepts empty pin when is_pin_enabled is false (manual deactivation)", async () => {
+    mockSupabase([
+      { email: "user@example.com", access_pin: "123456", is_active: true, is_pin_enabled: false },
+    ]);
+    const res = await verifyMailboxAccess("user@example.com", "");
+    expect(res.success).toBe(true);
+
+    const store = await cookies();
+    expect(store.set).toHaveBeenCalledTimes(1);
+    const [name, value] = (store.set as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(name).toContain("mailbox_auth_");
+    expect(value).toBe("authorized");
   });
 
   it("handles supabase error", async () => {
@@ -77,15 +93,19 @@ describe("verifyMailboxAccess", () => {
     expect(res.message).toContain("tidak ditemukan");
   });
 
-  it("rejects wrong pin", async () => {
-    mockSupabase([{ email: "user@example.com", access_pin: "999999", is_active: true }]);
+  it("rejects wrong pin when pin is enabled", async () => {
+    mockSupabase([
+      { email: "user@example.com", access_pin: "999999", is_active: true, is_pin_enabled: true },
+    ]);
     const res = await verifyMailboxAccess("user@example.com", "123456");
     expect(res.success).toBe(false);
     expect(res.message).toContain("PIN");
   });
 
   it("accepts correct pin and sets auth cookie", async () => {
-    mockSupabase([{ email: "user@example.com", access_pin: "123456", is_active: true }]);
+    mockSupabase([
+      { email: "user@example.com", access_pin: "123456", is_active: true, is_pin_enabled: true },
+    ]);
     const res = await verifyMailboxAccess("user@example.com", "123456");
     expect(res.success).toBe(true);
 
@@ -98,8 +118,26 @@ describe("verifyMailboxAccess", () => {
   });
 
   it("falls back to default pin 123456 when access_pin missing", async () => {
-    mockSupabase([{ email: "user@example.com", access_pin: null, is_active: true }]);
+    mockSupabase([
+      { email: "user@example.com", access_pin: null, is_active: true, is_pin_enabled: true },
+    ]);
     const res = await verifyMailboxAccess("user@example.com", "123456");
     expect(res.success).toBe(true);
+  });
+});
+
+describe("getMailboxPinStatus", () => {
+  it("returns is_pin_enabled correctly", async () => {
+    mockSupabase([{ email: "user@example.com", is_pin_enabled: false, is_active: true }]);
+    const res = await getMailboxPinStatus("user@example.com");
+    expect(res.exists).toBe(true);
+    expect(res.is_pin_enabled).toBe(false);
+  });
+
+  it("defaults is_pin_enabled to true if not specified", async () => {
+    mockSupabase([{ email: "user@example.com", is_pin_enabled: null, is_active: true }]);
+    const res = await getMailboxPinStatus("user@example.com");
+    expect(res.exists).toBe(true);
+    expect(res.is_pin_enabled).toBe(true);
   });
 });

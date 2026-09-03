@@ -6,23 +6,19 @@ import { cookies } from "next/headers";
 
 export async function verifyMailboxAccess(
   email: string,
-  pin: string,
+  pin?: string | null,
 ): Promise<{ success: boolean; message?: string }> {
   if (!email || !email.includes("@")) {
     return { success: false, message: "Format alamat email tidak valid." };
   }
 
-  if (!pin || pin.trim().length === 0) {
-    return { success: false, message: "PIN Akses / Password Mailbox wajib diisi." };
-  }
-
   const cleanEmail = email.trim().toLowerCase();
-  const cleanPin = pin.trim();
+  const cleanPin = (pin || "").trim();
   const supabase = createSupabaseServerClient();
 
   const { data, error } = await supabase
     .from("email_accounts")
-    .select("id, email, access_pin, is_active")
+    .select("id, email, access_pin, is_active, is_pin_enabled")
     .eq("email", cleanEmail)
     .eq("is_active", true)
     .maybeSingle();
@@ -47,12 +43,23 @@ export async function verifyMailboxAccess(
     };
   }
 
-  const expectedPin = data.access_pin || "123456";
-  if (cleanPin !== expectedPin) {
-    return {
-      success: false,
-      message: "PIN Akses / Password Mailbox salah. Harap periksa nota transaksi Anda.",
-    };
+  const isPinEnabled = (data as { is_pin_enabled?: boolean | null }).is_pin_enabled !== false;
+
+  if (isPinEnabled) {
+    if (!cleanPin) {
+      return {
+        success: false,
+        message: "Alamat email ini membutuhkan PIN Akses / Password.",
+      };
+    }
+
+    const expectedPin = data.access_pin || "123456";
+    if (cleanPin !== expectedPin) {
+      return {
+        success: false,
+        message: "PIN Akses / Password Mailbox salah. Harap periksa nota transaksi Anda.",
+      };
+    }
   }
 
   // Set HTTP-only authorization cookie for this mailbox
@@ -68,6 +75,33 @@ export async function verifyMailboxAccess(
   });
 
   return { success: true };
+}
+
+export async function getMailboxPinStatus(
+  email: string,
+): Promise<{ exists: boolean; is_pin_enabled: boolean }> {
+  if (!email || !email.includes("@")) {
+    return { exists: false, is_pin_enabled: true };
+  }
+
+  const cleanEmail = email.trim().toLowerCase();
+  const supabase = createSupabaseServerClient();
+
+  const { data } = await supabase
+    .from("email_accounts")
+    .select("id, email, is_pin_enabled, is_active")
+    .eq("email", cleanEmail)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  if (!data) {
+    return { exists: false, is_pin_enabled: true };
+  }
+
+  return {
+    exists: true,
+    is_pin_enabled: (data as { is_pin_enabled?: boolean | null }).is_pin_enabled !== false,
+  };
 }
 
 export async function isMailboxAuthorized(email: string): Promise<boolean> {
