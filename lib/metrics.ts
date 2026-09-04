@@ -43,4 +43,7 @@ export const httpRequestDuration =
 
 if (!globalForMetrics.httpRequestDuration) {
   globalForMetrics.httpRequestDuration = httpRequestDuration;
+  // Inisialisasi awal agar metric family http_request_duration_seconds_bucket langsung terdaftar di Prometheus
+  httpRequestDuration.observe({ method: "GET", route: "/api/metrics", status: "200" }, 0.001);
+  httpRequestsTotal.inc({ method: "GET", route: "/api/metrics", status: "200" }, 0);
 }
