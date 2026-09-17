@@ -64,14 +64,27 @@ if (existsSync(serverSource)) {
   await copyRequired(serverSource, serverDest, "server.mjs");
 }
 
-// 4. Dependencies for server.mjs (pino-http, dotenv, and peer dependencies)
+// 4. Dependencies for server.mjs (pino, pino-http, dotenv, and all runtime dependencies)
 const standaloneModules = path.join(standaloneDir, "node_modules");
 const depsToCopy = [
+  "@pinojs",
+  "atomic-sleep",
+  "dotenv",
+  "fast-redact",
+  "get-caller-file",
+  "help-me",
+  "on-exit-leak-free",
+  "pino",
+  "pino-abstract-transport",
   "pino-http",
   "pino-std-serializers",
   "process-warning",
-  "get-caller-file",
-  "dotenv",
+  "quick-format-unescaped",
+  "real-require",
+  "safe-stable-stringify",
+  "sonic-boom",
+  "split2",
+  "thread-stream",
 ];
 
 for (const dep of depsToCopy) {
