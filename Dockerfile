@@ -34,19 +34,12 @@ ENV HOSTNAME="0.0.0.0"
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
-# Create public directory if not exists
-RUN mkdir -p ./public
-
-# Copy standalone build artifact and static assets
+# Copy standalone build artifact (including static assets, server.mjs, and dependencies)
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
-# Copy custom server and install its dependencies
-COPY --from=builder --chown=nextjs:nodejs /app/server.mjs ./server.mjs
-RUN npm install pino pino-http dotenv && chown -R nextjs:nodejs ./node_modules
 
 USER nextjs
 
 EXPOSE 3000
 
 CMD ["node", "server.mjs"]
+

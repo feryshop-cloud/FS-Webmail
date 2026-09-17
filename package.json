@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "bun --bun next dev",
     "build": "next build",
+    "postbuild": "node scripts/prepare-standalone.mjs",
     "start": "next start",
     "lint": "eslint .",
     "format": "prettier --write .",
