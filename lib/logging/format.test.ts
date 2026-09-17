@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import {
   serializeError,
   formatLog,
@@ -112,11 +112,11 @@ describe("formatLog", () => {
   it("defaults environment to NODE_ENV or development", () => {
     const originalEnv = process.env.NODE_ENV;
     try {
-      process.env.NODE_ENV = "test";
+      (process.env as Record<string, string | undefined>).NODE_ENV = "test";
       const parsed = JSON.parse(formatLog("info", "msg", undefined, { service: "s" }));
       expect(parsed.environment).toBe("test");
     } finally {
-      process.env.NODE_ENV = originalEnv;
+      (process.env as Record<string, string | undefined>).NODE_ENV = originalEnv;
     }
   });
 
@@ -186,7 +186,7 @@ describe("resolveLogLevel", () => {
 
   afterEach(() => {
     process.env.LOG_LEVEL = originalEnv.LOG_LEVEL;
-    process.env.NODE_ENV = originalEnv.NODE_ENV;
+    (process.env as Record<string, string | undefined>).NODE_ENV = originalEnv.NODE_ENV;
   });
 
   it("returns LOG_LEVEL when set to a valid level", () => {
@@ -195,18 +195,18 @@ describe("resolveLogLevel", () => {
   });
 
   it("defaults to info in production", () => {
-    process.env.NODE_ENV = "production";
+    (process.env as Record<string, string | undefined>).NODE_ENV = "production";
     expect(resolveLogLevel()).toBe("info");
   });
 
   it("defaults to debug when not production", () => {
-    process.env.NODE_ENV = "development";
+    (process.env as Record<string, string | undefined>).NODE_ENV = "development";
     expect(resolveLogLevel()).toBe("debug");
   });
 
   it("ignores invalid LOG_LEVEL values", () => {
     process.env.LOG_LEVEL = "verbose";
-    process.env.NODE_ENV = "development";
+    (process.env as Record<string, string | undefined>).NODE_ENV = "development";
     expect(resolveLogLevel()).toBe("debug");
   });
 });

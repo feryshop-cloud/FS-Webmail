@@ -125,6 +125,15 @@ describe("verifyMailboxAccess", () => {
     const res = await verifyMailboxAccess("user@example.com", "123456");
     expect(res.success).toBe(true);
   });
+
+  it("handles missing supabase client gracefully without throwing", async () => {
+    (createSupabaseServerClient as ReturnType<typeof vi.fn>).mockImplementation(() => {
+      throw new Error("Supabase configuration missing: supabaseUrl is required");
+    });
+    const res = await verifyMailboxAccess("user@example.com", "123456");
+    expect(res.success).toBe(false);
+    expect(res.message).toContain("Konfigurasi server database bermasalah");
+  });
 });
 
 describe("isMailboxAuthorized - Cookie Forgery Prevention", () => {
@@ -161,6 +170,15 @@ describe("getMailboxPinStatus", () => {
     mockSupabase([{ email: "user@example.com", is_pin_enabled: null, is_active: true }]);
     const res = await getMailboxPinStatus("user@example.com");
     expect(res.exists).toBe(true);
+    expect(res.is_pin_enabled).toBe(true);
+  });
+
+  it("handles missing supabase client gracefully without throwing", async () => {
+    (createSupabaseServerClient as ReturnType<typeof vi.fn>).mockImplementation(() => {
+      throw new Error("Supabase configuration missing: supabaseUrl is required");
+    });
+    const res = await getMailboxPinStatus("user@example.com");
+    expect(res.exists).toBe(false);
     expect(res.is_pin_enabled).toBe(true);
   });
 });
