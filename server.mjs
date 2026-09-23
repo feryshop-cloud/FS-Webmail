@@ -13,14 +13,33 @@ const next = require("next");
 const pino = require("pino");
 const pinoHttp = require("pino-http");
 
-// Resolved production config. `next()` factory di jalur `output: standalone`
-// memeriksa `__NEXT_PRIVATE_STANDALONE_CONFIG` sebagai penanda boot standalone
-// resmi (dipakai juga oleh `.next/standalone/server.js`). Nilainya bukan cuma
-// penanda — `next/dist/server/config.js` meng-parse-nya sebagai JSON, jadi harus
-// berisi config lengkap yang sudah di-resolve, bukan string sebarang.
-const { default: loadConfig } = require("next/dist/server/config");
-const { PHASE_PRODUCTION_SERVER } = require("next/dist/shared/lib/constants");
-const resolvedConfig = await loadConfig(PHASE_PRODUCTION_SERVER, __dirname);
+import fs from "node:fs";
+
+// Resolved production config. Prioritaskan membaca langsung dari
+// .next/required-server-files.json (hasil pre-serialize saat next build)
+// agar tidak memicu pemanggilan webpack/build compiler di lingkungan standalone.
+let resolvedConfig = null;
+const reqFilesPath = path.join(__dirname, ".next", "required-server-files.json");
+if (fs.existsSync(reqFilesPath)) {
+  try {
+    const reqFiles = JSON.parse(fs.readFileSync(reqFilesPath, "utf-8"));
+    resolvedConfig = reqFiles.config;
+  } catch (e) {
+    // fallback
+  }
+}
+
+if (!resolvedConfig) {
+  try {
+    const { default: loadConfig } = require("next/dist/server/config");
+    const { PHASE_PRODUCTION_SERVER } = require("next/dist/shared/lib/constants");
+    resolvedConfig = await loadConfig(PHASE_PRODUCTION_SERVER, __dirname);
+  } catch (err) {
+    console.warn("Could not load config via loadConfig, fallback to minimal config:", err.message);
+    resolvedConfig = { distDir: ".next" };
+  }
+}
+
 process.env.__NEXT_PRIVATE_STANDALONE_CONFIG = JSON.stringify(resolvedConfig);
 loadEnv({
   path: [
