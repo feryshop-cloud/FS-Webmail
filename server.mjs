@@ -24,7 +24,7 @@ if (fs.existsSync(reqFilesPath)) {
   try {
     const reqFiles = JSON.parse(fs.readFileSync(reqFilesPath, "utf-8"));
     resolvedConfig = reqFiles.config;
-  } catch (e) {
+  } catch (_e) {
     // fallback
   }
 }
