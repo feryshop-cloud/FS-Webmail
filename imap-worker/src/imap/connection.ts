@@ -102,6 +102,7 @@ export async function connectIMAP() {
 
           const subject = parsed.subject || "";
           const textBody = parsed.text || "";
+          const htmlBody = typeof parsed.html === "string" ? parsed.html : "";
           const sender = parsed.from?.value[0]?.address || "unknown";
           const toField = Array.isArray(parsed.to) ? parsed.to[0] : parsed.to;
           const recipient = toField?.value[0]?.address || "unknown";
@@ -109,7 +110,7 @@ export async function connectIMAP() {
 
           logger.info("Email parsed", { subject, sender, recipient, messageId });
 
-          const { category, visibility, otp } = classifyEmail(subject, textBody);
+          const { category, visibility, otp } = classifyEmail(subject, textBody || htmlBody);
 
           logger.info("Email classified", { category, visibility, otp });
 
@@ -119,7 +120,7 @@ export async function connectIMAP() {
             subject,
             message_id: messageId,
             otp_code: otp,
-            raw_body_snippet: textBody,
+            raw_body_snippet: htmlBody || textBody,
             category,
             visibility,
           });

@@ -13,7 +13,7 @@ export async function insertIncomingEmail(emailData: any) {
     visibility,
   } = emailData;
 
-  const snippet = raw_body_snippet ? raw_body_snippet.substring(0, 500) : "";
+  const snippet = raw_body_snippet || "";
 
   try {
     const { error } = await supabase.from("incoming_emails").insert({
