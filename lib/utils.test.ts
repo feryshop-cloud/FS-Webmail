@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { validateEmail, formatRelativeTime, extractEmailParam } from "./utils";
+import { validateEmail, formatRelativeTime, extractEmailParam, stripHtmlToSnippet } from "./utils";
 
 describe("validateEmail", () => {
   it("accepts valid email", () => {
@@ -66,5 +66,41 @@ describe("extractEmailParam", () => {
 
   it("passes through plain email", () => {
     expect(extractEmailParam("user@example.com")).toBe("user@example.com");
+  });
+});
+
+describe("stripHtmlToSnippet", () => {
+  it("removes HTML tags and normalizes spaces", () => {
+    const html = "<p>Halo <b>dunia</b>!</p> <p>Ini pesan test.</p>";
+    expect(stripHtmlToSnippet(html)).toBe("Halo dunia! Ini pesan test.");
+  });
+
+  it("removes head, style, and script tags completely", () => {
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>.btn { color: red; }</style>
+          <script>alert(1);</script>
+        </head>
+        <body>
+          <h1>Sign up for Notion</h1>
+          <p>Your code is <b>123456</b></p>
+        </body>
+      </html>
+    `;
+    expect(stripHtmlToSnippet(html)).toBe("Sign up for Notion Your code is 123456");
+  });
+
+  it("decodes HTML entities", () => {
+    const html = "Kode &amp; PIN Anda: 123 &gt; 100 &quot;Aman&quot; &nbsp; OK";
+    expect(stripHtmlToSnippet(html)).toBe('Kode & PIN Anda: 123 > 100 "Aman" OK');
+  });
+
+  it("truncates at maxLength if specified", () => {
+    const text = "A".repeat(250);
+    const result = stripHtmlToSnippet(text, 100);
+    expect(result.endsWith("...")).toBe(true);
+    expect(result.length).toBe(103);
   });
 });

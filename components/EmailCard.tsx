@@ -5,6 +5,7 @@ import { Copy, Check, ChevronDown, ChevronUp, Mail, KeyRound } from "lucide-reac
 import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
 import { EmailBodyViewer } from "./EmailBodyViewer";
+import { stripHtmlToSnippet } from "../lib/utils";
 
 interface EmailCardProps {
   email: Email;
@@ -71,7 +72,9 @@ export default function EmailCard({ email }: EmailCardProps) {
       {/* Snippet preview if collapsed */}
       {!isExpanded && email.raw_body_snippet && (
         <div className="px-5 pb-4 pt-0">
-          <p className="line-clamp-2 text-xs text-slate-500">{email.raw_body_snippet}</p>
+          <p className="line-clamp-2 text-xs text-slate-500">
+            {stripHtmlToSnippet(email.raw_body_snippet)}
+          </p>
         </div>
       )}
 

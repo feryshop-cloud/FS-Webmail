@@ -41,3 +41,47 @@ export function extractEmailParam(encoded: string): string {
     return encoded;
   }
 }
+
+/**
+ * Membersihkan tag HTML, style, script, dan entity agar cuplikan di daftar email
+ * tampil sebagai teks biasa yang rapi dan mudah dibaca tanpa skrip kode HTML.
+ */
+export function stripHtmlToSnippet(htmlOrText: string | null | undefined, maxLength = 180): string {
+  if (!htmlOrText) return "";
+
+  // 1. Hapus komentar HTML
+  let text = htmlOrText.replace(/<!--[\s\S]*?-->/g, " ");
+
+  // 2. Hapus blok <style> dan <script> beserta seluruh isinya
+  text = text.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, " ");
+  text = text.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, " ");
+
+  // 3. Hapus blok <head> beserta seluruh isinya
+  text = text.replace(/<head[^>]*>[\s\S]*?<\/head>/gi, " ");
+
+  // 4. Hapus seluruh tag HTML yang tersisa
+  text = text.replace(/<[^>]+>/g, " ");
+
+  // 5. Decode entitas HTML umum
+  text = text
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&#x2F;/gi, "/")
+    .replace(/&[a-z0-9]+;/gi, " ");
+
+  // 6. Normalisasi spasi sebelum tanda baca yang mungkin timbul dari tag inline (contoh <b>kata</b>!)
+  text = text.replace(/\s+([!?,.:;])/g, "$1");
+
+  // 7. Normalisasi whitespace menjadi satu spasi
+  text = text.replace(/\s+/g, " ").trim();
+
+  if (maxLength > 0 && text.length > maxLength) {
+    return text.slice(0, maxLength).trim() + "...";
+  }
+
+  return text;
+}
