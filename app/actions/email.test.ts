@@ -18,7 +18,7 @@ vi.mock("@/lib/logger", () => ({
   },
 }));
 
-import { getMailboxPinStatus, isMailboxAuthorized, verifyMailboxAccess } from "@/app/actions/email";
+import { getMailboxPinStatus, isMailboxAuthorized, revokeMailboxAccess, verifyMailboxAccess } from "@/app/actions/email";
 import { verifyMailboxAuthToken } from "@/lib/auth/signed-token";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
@@ -180,5 +180,25 @@ describe("getMailboxPinStatus", () => {
     const res = await getMailboxPinStatus("user@example.com");
     expect(res.exists).toBe(false);
     expect(res.is_pin_enabled).toBe(true);
+  });
+});
+
+describe("revokeMailboxAccess", () => {
+  it("deletes specified and remaining mailbox auth cookies", async () => {
+    const mockDelete = vi.fn();
+    const mockGetAll = vi.fn().mockReturnValue([
+      { name: "mailbox_auth_123" },
+      { name: "other_cookie" },
+    ]);
+    (cookies as ReturnType<typeof vi.fn>).mockResolvedValue({
+      delete: mockDelete,
+      getAll: mockGetAll,
+    });
+
+    await revokeMailboxAccess("user@example.com");
+    expect(mockDelete).toHaveBeenCalledWith(
+      `mailbox_auth_${Buffer.from("user@example.com").toString("hex")}`,
+    );
+    expect(mockDelete).toHaveBeenCalledWith("mailbox_auth_123");
   });
 });

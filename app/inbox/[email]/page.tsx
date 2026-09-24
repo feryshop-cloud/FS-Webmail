@@ -4,6 +4,7 @@ import { isMailboxAuthorized } from "../../actions/email";
 import { logger } from "../../../lib/logger";
 import InboxList from "../../../components/InboxList";
 import ChangePasswordModal from "../../../components/ChangePasswordModal";
+import LogoutButton from "../../../components/LogoutButton";
 
 export default async function InboxPage({ params }: { params: Promise<{ email: string }> }) {
   const resolvedParams = await params;
@@ -59,11 +60,14 @@ export default async function InboxPage({ params }: { params: Promise<{ email: s
             </h2>
             <h1 className="break-all text-2xl font-bold text-slate-900">{email}</h1>
           </div>
-          <ChangePasswordModal
-            recipientEmail={email}
-            disabled={isInboxEmpty}
-            initialPinEnabled={initialPinEnabled}
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <ChangePasswordModal
+              recipientEmail={email}
+              disabled={isInboxEmpty}
+              initialPinEnabled={initialPinEnabled}
+            />
+            <LogoutButton recipientEmail={email} />
+          </div>
         </div>
 
         <InboxList recipientEmail={email} initialEmails={emails} />

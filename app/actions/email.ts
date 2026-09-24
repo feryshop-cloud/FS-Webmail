@@ -99,8 +99,17 @@ export async function verifyMailboxAccess(
     // Verification succeeded -> reset failed attempt counter
     resetRateLimit(rateLimitKey);
 
-    // Set HTTP-only, HMAC-signed authorization cookie for this mailbox
+    // Enforce single-mailbox session: clear any existing mailbox_auth cookies
     const cookieStore = await cookies();
+    if (typeof cookieStore.getAll === "function") {
+      for (const cookie of cookieStore.getAll()) {
+        if (cookie.name.startsWith("mailbox_auth_")) {
+          cookieStore.delete(cookie.name);
+        }
+      }
+    }
+
+    // Set HTTP-only, HMAC-signed authorization cookie for this mailbox
     const cookieName = `mailbox_auth_${Buffer.from(cleanEmail).toString("hex")}`;
     const signedToken = await signMailboxAuthToken(cleanEmail);
 
@@ -198,13 +207,22 @@ export async function isMailboxAuthorized(email: string): Promise<boolean> {
   }
 }
 
-export async function revokeMailboxAccess(email: string): Promise<void> {
+export async function revokeMailboxAccess(email?: string): Promise<void> {
   try {
-    if (!email) return;
-    const cleanEmail = email.trim().toLowerCase();
     const cookieStore = await cookies();
-    const cookieName = `mailbox_auth_${Buffer.from(cleanEmail).toString("hex")}`;
-    cookieStore.delete(cookieName);
+    if (email) {
+      const cleanEmail = email.trim().toLowerCase();
+      const cookieName = `mailbox_auth_${Buffer.from(cleanEmail).toString("hex")}`;
+      cookieStore.delete(cookieName);
+    }
+    // Also remove any remaining mailbox_auth_ cookies to guarantee clean logout
+    if (typeof cookieStore.getAll === "function") {
+      for (const cookie of cookieStore.getAll()) {
+        if (cookie.name.startsWith("mailbox_auth_")) {
+          cookieStore.delete(cookie.name);
+        }
+      }
+    }
   } catch (err) {
     logger.error("Unexpected error in revokeMailboxAccess", {
       context: "ServerAction: revokeMailboxAccess",
