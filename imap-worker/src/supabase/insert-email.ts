@@ -42,7 +42,7 @@ export async function insertIncomingEmail(emailData: any) {
 
     logger.info("Email inserted successfully", { message_id, recipient_email });
   } catch (err: any) {
-    logger.error("Error inserting email to Supabase", { error: err.message, message_id });
+    logger.error("Error inserting email to Supabase", { err, message_id });
     throw err;
   }
 }

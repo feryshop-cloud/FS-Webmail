@@ -21,7 +21,7 @@ async function main() {
     await connectIMAP();
     logger.info("IMAP connection established, worker is running");
   } catch (err: any) {
-    logger.error("Fatal error during worker startup", { error: err.message });
+    logger.error("Fatal error during worker startup", { err });
     process.exit(1);
   }
 }
@@ -38,12 +38,14 @@ process.on("SIGTERM", () => {
 });
 
 process.on("uncaughtException", (err) => {
-  logger.error("Uncaught exception", { error: err.message, stack: err.stack });
+  logger.error("Uncaught exception", { err });
   process.exit(1);
 });
 
 process.on("unhandledRejection", (reason: any) => {
-  logger.error("Unhandled rejection", { error: reason?.message || String(reason) });
+  logger.error("Unhandled rejection", {
+    err: reason instanceof Error ? reason : new Error(String(reason)),
+  });
   process.exit(1);
 });
 

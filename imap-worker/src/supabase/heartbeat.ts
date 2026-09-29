@@ -34,7 +34,7 @@ async function sendHeartbeatWithRetry(
         workerName,
         attempt,
         maxAttempts,
-        error: err.message,
+        err,
       });
       return;
     }
@@ -46,7 +46,7 @@ async function sendHeartbeatWithRetry(
       attempt,
       maxAttempts,
       retryDelayMs: retryDelay,
-      error: err.message,
+      err,
     });
 
     await new Promise((resolve) => setTimeout(resolve, retryDelay));

@@ -51,7 +51,7 @@ export async function connectIMAP() {
           resolve(true);
         });
         client!.on("error", (err: any) => {
-          logger.error("IMAP client error event", { error: err?.message || String(err) });
+          logger.error("IMAP client error event", { err });
           resolve(true);
         });
       });
@@ -125,7 +125,7 @@ export async function connectIMAP() {
             visibility,
           });
         } catch (err: any) {
-          logger.error("Error processing incoming email", { error: err.message, stack: err.stack });
+          logger.error("Error processing incoming email", { err, message_id: messageId });
         }
       });
 
@@ -134,13 +134,13 @@ export async function connectIMAP() {
       // Suspend execution di sini sampai koneksi putus
       await connectionLostPromise;
     } catch (err: any) {
-      logger.error("IMAP loop encountered an error", { error: err.message, stack: err.stack });
+      logger.error("IMAP loop encountered an error", { err });
     } finally {
       if (lock) {
         try {
           lock.release();
         } catch (e: any) {
-          logger.error("Error releasing lock", { error: e.message });
+          logger.error("Error releasing lock", { err: e });
         }
       }
       if (client) {
