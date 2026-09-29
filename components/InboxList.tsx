@@ -5,6 +5,7 @@ import { supabase } from "../lib/supabase/client";
 import { Email } from "../types/email";
 import { ChevronLeft, ChevronRight, Mail, Search } from "lucide-react";
 import EmailCard from "./EmailCard";
+import { archiveMailboxEmail, deleteMailboxEmail } from "../app/actions/email";
 
 interface InboxListProps {
   recipientEmail: string;
@@ -13,12 +14,13 @@ interface InboxListProps {
 
 const PAGE_SIZE = 10;
 
-type Filter = "all" | "otp" | "unread";
+type Filter = "all" | "otp" | "unread" | "archived";
 
 const FILTER_OPTIONS: { value: Filter; label: string }[] = [
   { value: "all", label: "Semua" },
   { value: "otp", label: "Berisi OTP" },
   { value: "unread", label: "Belum Dibaca" },
+  { value: "archived", label: "Arsip" },
 ];
 
 export default function InboxList({ recipientEmail, initialEmails }: InboxListProps) {
@@ -59,6 +61,12 @@ export default function InboxList({ recipientEmail, initialEmails }: InboxListPr
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return emails.filter((e) => {
+      // Tab arsip hanya menampilkan yang diarsipkan; tab lain sembunyikan arsip.
+      if (filter === "archived") {
+        if (!e.is_archived) return false;
+      } else if (e.is_archived) {
+        return false;
+      }
       if (filter === "otp" && !e.otp_code) return false;
       if (filter === "unread" && e.is_read) return false;
       if (!q) return true;
@@ -75,6 +83,24 @@ export default function InboxList({ recipientEmail, initialEmails }: InboxListPr
   const currentPage = Math.min(page, totalPages);
   const startIndex = (currentPage - 1) * PAGE_SIZE;
   const pageItems = filtered.slice(startIndex, startIndex + PAGE_SIZE);
+
+  const handleArchive = async (target: Email, archived: boolean) => {
+    if (!target.id) return;
+    const res = await archiveMailboxEmail(recipientEmail, target.id, archived);
+    if (res.success) {
+      setEmails((prev) =>
+        prev.map((e) => (e.id === target.id ? { ...e, is_archived: archived } : e)),
+      );
+    }
+  };
+
+  const handleDelete = async (target: Email) => {
+    if (!target.id) return;
+    const res = await deleteMailboxEmail(recipientEmail, target.id);
+    if (res.success) {
+      setEmails((prev) => prev.filter((e) => e.id !== target.id));
+    }
+  };
 
   if (emails.length === 0) {
     return (
@@ -139,7 +165,12 @@ export default function InboxList({ recipientEmail, initialEmails }: InboxListPr
         <>
           <div className="flex flex-col gap-4">
             {pageItems.map((email) => (
-              <EmailCard key={email.id} email={email} />
+              <EmailCard
+                key={email.id}
+                email={email}
+                onArchive={handleArchive}
+                onDelete={handleDelete}
+              />
             ))}
           </div>
 

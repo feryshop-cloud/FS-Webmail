@@ -230,3 +230,110 @@ export async function revokeMailboxAccess(email?: string): Promise<void> {
     });
   }
 }
+
+type MailboxEmailAction = "archive" | "unarchive" | "delete";
+
+const MAILBOX_EMAIL_ACTION_MESSAGES: Record<MailboxEmailAction, string> = {
+  archive: "Email diarsipkan.",
+  unarchive: "Email dikeluarkan dari arsip.",
+  delete: "Email dihapus.",
+};
+
+async function invokeMailboxEmailAction(
+  email: string,
+  emailId: string,
+  action: MailboxEmailAction,
+): Promise<{ success: boolean; message?: string }> {
+  try {
+    if (!email || !email.includes("@")) {
+      return { success: false, message: "Format alamat email tidak valid." };
+    }
+    if (!emailId) {
+      return { success: false, message: "ID email tidak valid." };
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+
+    // Syarat: sesi mailbox (cookie HMAC hasil verifikasi PIN) masih berlaku.
+    const authorized = await isMailboxAuthorized(cleanEmail);
+    if (!authorized) {
+      return {
+        success: false,
+        message: "Sesi mailbox berakhir. Silakan buka ulang inbox.",
+      };
+    }
+
+    // Teruskan token HMAC httpOnly ke Edge Function sebagai bukti kepemilikan.
+    // Token tidak pernah menyentuh service_role_key (hanya hidup di Edge Function).
+    const cookieStore = await cookies();
+    const cookieName = `mailbox_auth_${Buffer.from(cleanEmail).toString("hex")}`;
+    const mailboxToken = cookieStore.get(cookieName)?.value;
+    if (!mailboxToken) {
+      return {
+        success: false,
+        message: "Sesi mailbox berakhir. Silakan buka ulang inbox.",
+      };
+    }
+
+    let supabase;
+    try {
+      supabase = createSupabaseServerClient();
+    } catch (clientErr) {
+      logger.error("Failed to initialize Supabase client in invokeMailboxEmailAction", {
+        context: "ServerAction: invokeMailboxEmailAction",
+        err: clientErr instanceof Error ? clientErr.message : String(clientErr),
+        email: cleanEmail,
+      });
+      return {
+        success: false,
+        message: "Konfigurasi server database bermasalah. Harap hubungi admin.",
+      };
+    }
+
+    const { data, error } = await supabase.functions.invoke("mailbox-email-actions", {
+      body: {
+        recipient_email: cleanEmail,
+        email_id: emailId,
+        action,
+        mailbox_token: mailboxToken,
+      },
+    });
+
+    if (error) {
+      logger.error("Edge Function mailbox-email-actions invoke failed", {
+        context: "ServerAction: invokeMailboxEmailAction",
+        err: error.message,
+        email: cleanEmail,
+        action,
+      });
+      return { success: false, message: "Gagal memproses permintaan. Silakan coba lagi." };
+    }
+
+    if (data?.error) {
+      return { success: false, message: data.error };
+    }
+
+    return { success: true, message: data?.message || MAILBOX_EMAIL_ACTION_MESSAGES[action] };
+  } catch (err) {
+    logger.error("Unexpected error in invokeMailboxEmailAction", {
+      context: "ServerAction: invokeMailboxEmailAction",
+      err: err instanceof Error ? err.message : String(err),
+    });
+    return { success: false, message: "Terjadi kesalahan tak terduga pada server." };
+  }
+}
+
+export async function archiveMailboxEmail(
+  email: string,
+  emailId: string,
+  archived = true,
+): Promise<{ success: boolean; message?: string }> {
+  return invokeMailboxEmailAction(email, emailId, archived ? "archive" : "unarchive");
+}
+
+export async function deleteMailboxEmail(
+  email: string,
+  emailId: string,
+): Promise<{ success: boolean; message?: string }> {
+  return invokeMailboxEmailAction(email, emailId, "delete");
+}

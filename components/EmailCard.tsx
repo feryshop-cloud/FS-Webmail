@@ -1,7 +1,17 @@
 "use client";
 
 import { Email } from "../types/email";
-import { Copy, Check, ChevronDown, ChevronUp, Mail, KeyRound } from "lucide-react";
+import {
+  Copy,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Mail,
+  KeyRound,
+  Archive,
+  ArchiveRestore,
+  Trash2,
+} from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
 import { EmailBodyViewer } from "./EmailBodyViewer";
@@ -9,11 +19,15 @@ import { stripHtmlToSnippet } from "../lib/utils";
 
 interface EmailCardProps {
   email: Email;
+  onArchive?: (email: Email, archived: boolean) => Promise<void>;
+  onDelete?: (email: Email) => Promise<void>;
 }
 
-export default function EmailCard({ email }: EmailCardProps) {
+export default function EmailCard({ email, onArchive, onDelete }: EmailCardProps) {
   const [copied, setCopied] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [actionLoading, setActionLoading] = useState<"archive" | "delete" | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const handleCopy = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -21,6 +35,35 @@ export default function EmailCard({ email }: EmailCardProps) {
       navigator.clipboard.writeText(email.otp_code);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const canMutate = Boolean(email.id && (onArchive || onDelete));
+
+  const handleArchive = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!onArchive || !email.id || actionLoading) return;
+    setActionLoading("archive");
+    try {
+      await onArchive(email, !email.is_archived);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!onDelete || !email.id || actionLoading) return;
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
+    setActionLoading("delete");
+    try {
+      await onDelete(email);
+    } finally {
+      setActionLoading(null);
+      setConfirmDelete(false);
     }
   };
 
@@ -136,6 +179,67 @@ export default function EmailCard({ email }: EmailCardProps) {
 
           {/* Full Email Body Text / HTML */}
           <EmailBodyViewer content={email.raw_body_snippet || ""} />
+
+          {/* Arsip & hapus milik mailbox ini (mutasi via Edge Function) */}
+          {canMutate && (
+            <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4">
+              {onArchive && (
+                <button
+                  type="button"
+                  onClick={handleArchive}
+                  disabled={actionLoading !== null}
+                  className="flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {email.is_archived ? (
+                    <>
+                      <ArchiveRestore size={14} />
+                      {actionLoading === "archive" ? "Memproses..." : "Keluarkan dari arsip"}
+                    </>
+                  ) : (
+                    <>
+                      <Archive size={14} />
+                      {actionLoading === "archive" ? "Memproses..." : "Arsipkan"}
+                    </>
+                  )}
+                </button>
+              )}
+              {onDelete &&
+                (confirmDelete ? (
+                  <span className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleDelete}
+                      disabled={actionLoading !== null}
+                      className="flex items-center gap-1.5 rounded-md bg-red-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <Trash2 size={14} />
+                      {actionLoading === "delete" ? "Menghapus..." : "Ya, hapus email ini"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setConfirmDelete(false);
+                      }}
+                      disabled={actionLoading !== null}
+                      className="rounded-md px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      Batal
+                    </button>
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    disabled={actionLoading !== null}
+                    className="flex items-center gap-1.5 rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 transition-colors hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <Trash2 size={14} />
+                    Hapus
+                  </button>
+                ))}
+            </div>
+          )}
         </div>
       )}
     </div>

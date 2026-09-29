@@ -4,3 +4,6 @@ name = "FerryMail"
 
 [functions.change-mailbox-password]
 verify_jwt = false
+
+[functions.mailbox-email-actions]
+verify_jwt = false

@@ -18,8 +18,15 @@ vi.mock("@/lib/logger", () => ({
   },
 }));
 
-import { getMailboxPinStatus, isMailboxAuthorized, revokeMailboxAccess, verifyMailboxAccess } from "@/app/actions/email";
-import { verifyMailboxAuthToken } from "@/lib/auth/signed-token";
+import {
+  getMailboxPinStatus,
+  isMailboxAuthorized,
+  revokeMailboxAccess,
+  verifyMailboxAccess,
+  archiveMailboxEmail,
+  deleteMailboxEmail,
+} from "@/app/actions/email";
+import { signMailboxAuthToken, verifyMailboxAuthToken } from "@/lib/auth/signed-token";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
 
@@ -186,10 +193,9 @@ describe("getMailboxPinStatus", () => {
 describe("revokeMailboxAccess", () => {
   it("deletes specified and remaining mailbox auth cookies", async () => {
     const mockDelete = vi.fn();
-    const mockGetAll = vi.fn().mockReturnValue([
-      { name: "mailbox_auth_123" },
-      { name: "other_cookie" },
-    ]);
+    const mockGetAll = vi
+      .fn()
+      .mockReturnValue([{ name: "mailbox_auth_123" }, { name: "other_cookie" }]);
     (cookies as ReturnType<typeof vi.fn>).mockResolvedValue({
       delete: mockDelete,
       getAll: mockGetAll,
@@ -200,5 +206,107 @@ describe("revokeMailboxAccess", () => {
       `mailbox_auth_${Buffer.from("user@example.com").toString("hex")}`,
     );
     expect(mockDelete).toHaveBeenCalledWith("mailbox_auth_123");
+  });
+});
+
+describe("archiveMailboxEmail / deleteMailboxEmail", () => {
+  const validEmail = "user@example.com";
+  const emailId = "11111111-2222-3333-4444-555555555555";
+
+  async function mockAuthorizedSession(
+    email: string,
+    invokeImpl?: (...args: unknown[]) => unknown,
+  ) {
+    const token = await signMailboxAuthToken(email);
+    const mockInvoke = vi.fn();
+    if (invokeImpl) mockInvoke.mockImplementation(invokeImpl as (...a: never[]) => unknown);
+    (cookies as ReturnType<typeof vi.fn>).mockResolvedValue({
+      get: vi.fn().mockReturnValue({ value: token }),
+      set: vi.fn(),
+      delete: vi.fn(),
+    });
+    (createSupabaseServerClient as ReturnType<typeof vi.fn>).mockReturnValue({
+      functions: { invoke: mockInvoke },
+    });
+    return mockInvoke;
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("rejects invalid email without touching supabase", async () => {
+    const res = await archiveMailboxEmail("bukan-email", emailId, true);
+    expect(res.success).toBe(false);
+    expect(res.message).toContain("Format alamat email");
+    expect(createSupabaseServerClient).not.toHaveBeenCalled();
+  });
+
+  it("rejects missing email id", async () => {
+    const res = await deleteMailboxEmail(validEmail, "");
+    expect(res.success).toBe(false);
+    expect(res.message).toContain("ID email");
+  });
+
+  it("rejects when mailbox session is invalid", async () => {
+    (cookies as ReturnType<typeof vi.fn>).mockResolvedValue({
+      get: vi.fn().mockReturnValue({ value: "forged-token" }),
+    });
+    const res = await deleteMailboxEmail(validEmail, emailId);
+    expect(res.success).toBe(false);
+    expect(res.message).toContain("Sesi mailbox");
+    expect(createSupabaseServerClient).not.toHaveBeenCalled();
+  });
+
+  it("archives email and returns edge success message", async () => {
+    const mockInvoke = await mockAuthorizedSession(validEmail, async () => ({
+      data: { success: true, message: "Email diarsipkan." },
+      error: null,
+    }));
+    const res = await archiveMailboxEmail(validEmail, emailId, true);
+    expect(res.success).toBe(true);
+    expect(res.message).toContain("diarsipkan");
+    expect(mockInvoke).toHaveBeenCalledWith(
+      "mailbox-email-actions",
+      expect.objectContaining({
+        body: expect.objectContaining({ action: "archive", email_id: emailId }),
+      }),
+    );
+  });
+
+  it("unarchives when archived=false", async () => {
+    const mockInvoke = await mockAuthorizedSession(validEmail, async () => ({
+      data: { success: true },
+      error: null,
+    }));
+    const res = await archiveMailboxEmail(validEmail, emailId, false);
+    expect(res.success).toBe(true);
+    expect(mockInvoke).toHaveBeenCalledWith(
+      "mailbox-email-actions",
+      expect.objectContaining({ body: expect.objectContaining({ action: "unarchive" }) }),
+    );
+  });
+
+  it("deletes email via edge function", async () => {
+    const mockInvoke = await mockAuthorizedSession(validEmail, async () => ({
+      data: { success: true, message: "Email dihapus." },
+      error: null,
+    }));
+    const res = await deleteMailboxEmail(validEmail, emailId);
+    expect(res.success).toBe(true);
+    expect(mockInvoke).toHaveBeenCalledWith(
+      "mailbox-email-actions",
+      expect.objectContaining({ body: expect.objectContaining({ action: "delete" }) }),
+    );
+  });
+
+  it("forwards edge function error message", async () => {
+    await mockAuthorizedSession(validEmail, async () => ({
+      data: { error: "Email tidak ditemukan." },
+      error: null,
+    }));
+    const res = await deleteMailboxEmail(validEmail, emailId);
+    expect(res.success).toBe(false);
+    expect(res.message).toContain("tidak ditemukan");
   });
 });
