@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase/client";
-import { Key, Shield, ShieldOff, Loader2 } from "lucide-react";
+import { Key, Shield, ShieldOff, Loader2, Eye, EyeOff } from "lucide-react";
 
 interface ChangePasswordModalProps {
   recipientEmail: string;
@@ -24,6 +24,7 @@ export default function ChangePasswordModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [showPin, setShowPin] = useState(false);
 
   useEffect(() => {
     setIsPinEnabled(initialPinEnabled);
@@ -110,6 +111,7 @@ export default function ChangePasswordModal({
 
   const closeModal = () => {
     setIsOpen(false);
+    setShowPin(false);
     setError(null);
     setSuccess(null);
     setOldPin("");
@@ -234,34 +236,66 @@ export default function ChangePasswordModal({
                   <label className="mb-1 block text-xs font-semibold text-slate-700">
                     PIN Lama
                   </label>
-                  <input
-                    type="password"
-                    required
-                    inputMode="numeric"
-                    maxLength={6}
-                    pattern="[0-9]{6}"
-                    value={oldPin}
-                    onChange={(e) => setOldPin(e.target.value)}
-                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 font-mono text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                    placeholder="PIN 6 digit saat ini"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showPin ? "text" : "password"}
+                      required
+                      inputMode="numeric"
+                      maxLength={6}
+                      pattern="[0-9]{6}"
+                      value={oldPin}
+                      onChange={(e) => setOldPin(e.target.value)}
+                      className="w-full rounded-xl border border-slate-300 px-3 py-2.5 pr-10 font-mono text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                      placeholder="PIN 6 digit saat ini"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPin((v) => !v)}
+                      className="text-slate-400 hover:text-slate-600 absolute top-1/2 right-2 -translate-y-1/2 rounded-md p-1.5"
+                      title={showPin ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
+                      aria-label={showPin ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
+                      aria-pressed={showPin}
+                    >
+                      {showPin ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 <div>
                   <label className="mb-1 block text-xs font-semibold text-slate-700">
                     PIN Baru
                   </label>
-                  <input
-                    type="password"
-                    required
-                    inputMode="numeric"
-                    maxLength={6}
-                    pattern="[0-9]{6}"
-                    value={newPin}
-                    onChange={(e) => setNewPin(e.target.value)}
-                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 font-mono text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                    placeholder="6 digit angka"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showPin ? "text" : "password"}
+                      required
+                      inputMode="numeric"
+                      maxLength={6}
+                      pattern="[0-9]{6}"
+                      value={newPin}
+                      onChange={(e) => setNewPin(e.target.value)}
+                      className="w-full rounded-xl border border-slate-300 px-3 py-2.5 pr-10 font-mono text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                      placeholder="6 digit angka"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPin((v) => !v)}
+                      className="text-slate-400 hover:text-slate-600 absolute top-1/2 right-2 -translate-y-1/2 rounded-md p-1.5"
+                      title={showPin ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
+                      aria-label={showPin ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
+                      aria-pressed={showPin}
+                    >
+                      {showPin ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="mt-6 flex justify-end gap-2.5">
@@ -303,17 +337,33 @@ export default function ChangePasswordModal({
                   <label className="mb-1 block text-xs font-semibold text-slate-700">
                     Masukkan PIN Saat Ini untuk Konfirmasi
                   </label>
-                  <input
-                    type="password"
-                    required
-                    inputMode="numeric"
-                    maxLength={6}
-                    pattern="[0-9]{6}"
-                    value={oldPin}
-                    onChange={(e) => setOldPin(e.target.value)}
-                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 font-mono text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                    placeholder="PIN 6 digit saat ini"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showPin ? "text" : "password"}
+                      required
+                      inputMode="numeric"
+                      maxLength={6}
+                      pattern="[0-9]{6}"
+                      value={oldPin}
+                      onChange={(e) => setOldPin(e.target.value)}
+                      className="w-full rounded-xl border border-slate-300 px-3 py-2.5 pr-10 font-mono text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                      placeholder="PIN 6 digit saat ini"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPin((v) => !v)}
+                      className="text-slate-400 hover:text-slate-600 absolute top-1/2 right-2 -translate-y-1/2 rounded-md p-1.5"
+                      title={showPin ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
+                      aria-label={showPin ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
+                      aria-pressed={showPin}
+                    >
+                      {showPin ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="mt-6 flex justify-end gap-2.5">
@@ -349,16 +399,32 @@ export default function ChangePasswordModal({
                   <label className="mb-1 block text-xs font-semibold text-slate-700">
                     PIN Baru (Opsional, Default: 123456)
                   </label>
-                  <input
-                    type="password"
-                    inputMode="numeric"
-                    maxLength={6}
-                    pattern="[0-9]{6}"
-                    value={newPin}
-                    onChange={(e) => setNewPin(e.target.value)}
-                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 font-mono text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                    placeholder="Kosongkan untuk PIN default 123456"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showPin ? "text" : "password"}
+                      inputMode="numeric"
+                      maxLength={6}
+                      pattern="[0-9]{6}"
+                      value={newPin}
+                      onChange={(e) => setNewPin(e.target.value)}
+                      className="w-full rounded-xl border border-slate-300 px-3 py-2.5 pr-10 font-mono text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                      placeholder="Kosongkan untuk PIN default 123456"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPin((v) => !v)}
+                      className="text-slate-400 hover:text-slate-600 absolute top-1/2 right-2 -translate-y-1/2 rounded-md p-1.5"
+                      title={showPin ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
+                      aria-label={showPin ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
+                      aria-pressed={showPin}
+                    >
+                      {showPin ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
                   <p className="mt-1 text-[11px] text-slate-400">
                     Jika dikosongkan, PIN akan otomatis diaktifkan dengan nilai default{" "}
                     <strong>123456</strong>.

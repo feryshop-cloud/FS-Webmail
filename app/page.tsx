@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Mail, Lock, Loader2, AlertCircle } from "lucide-react";
+import { Mail, Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
 import { verifyMailboxAccess } from "./actions/email";
 
 export default function LandingPage() {
   const [email, setEmail] = useState("");
   const [pin, setPin] = useState("");
+  const [showPin, setShowPin] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -85,7 +86,7 @@ export default function LandingPage() {
             <div className="relative">
               <input
                 id="pin"
-                type="password"
+                type={showPin ? "text" : "password"}
                 disabled={isLoading}
                 value={pin}
                 onChange={(e) => {
@@ -93,9 +94,23 @@ export default function LandingPage() {
                   if (error) setError(null);
                 }}
                 placeholder="Masukkan PIN Akses"
-                className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-600 disabled:bg-slate-100 disabled:opacity-75"
+                className="w-full rounded-lg border border-slate-300 px-4 py-3 pr-11 text-sm transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-600 disabled:bg-slate-100 disabled:opacity-75"
               />
-              <Lock className="absolute right-3 top-3.5 h-4 w-4 text-slate-400" />
+              <button
+                type="button"
+                onClick={() => setShowPin((v) => !v)}
+                disabled={isLoading}
+                className="absolute top-1/2 right-2.5 -translate-y-1/2 rounded-md p-2 text-slate-400 transition-colors hover:text-slate-600 disabled:opacity-50"
+                title={showPin ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
+                aria-label={showPin ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
+                aria-pressed={showPin}
+              >
+                {showPin ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
             </div>
             <p className="mt-1.5 text-[11px] text-slate-400">
               Masukkan PIN yang tertera pada nota transaksi pembelian akun Anda.
