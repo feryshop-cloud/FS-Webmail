@@ -66,7 +66,7 @@ describe("verifyMailboxAccess", () => {
 
   it("rejects empty pin when is_pin_enabled is true", async () => {
     mockSupabase([
-      { email: "user@example.com", access_pin: "123456", is_active: true, is_pin_enabled: true },
+      { email: "user@example.com", access_password: "123456", is_active: true, is_password_enabled: true },
     ]);
     const res = await verifyMailboxAccess("user@example.com", "   ");
     expect(res.success).toBe(false);
@@ -75,7 +75,7 @@ describe("verifyMailboxAccess", () => {
 
   it("accepts empty pin when is_pin_enabled is false (manual deactivation)", async () => {
     mockSupabase([
-      { email: "user@example.com", access_pin: "123456", is_active: true, is_pin_enabled: false },
+      { email: "user@example.com", access_password: "123456", is_active: true, is_password_enabled: false },
     ]);
     const res = await verifyMailboxAccess("user@example.com", "");
     expect(res.success).toBe(true);
@@ -103,7 +103,7 @@ describe("verifyMailboxAccess", () => {
 
   it("rejects wrong pin when pin is enabled", async () => {
     mockSupabase([
-      { email: "user@example.com", access_pin: "999999", is_active: true, is_pin_enabled: true },
+      { email: "user@example.com", access_password: "999999", is_active: true, is_password_enabled: true },
     ]);
     const res = await verifyMailboxAccess("user@example.com", "123456");
     expect(res.success).toBe(false);
@@ -112,7 +112,7 @@ describe("verifyMailboxAccess", () => {
 
   it("accepts correct pin and sets signed HMAC auth cookie", async () => {
     mockSupabase([
-      { email: "user@example.com", access_pin: "123456", is_active: true, is_pin_enabled: true },
+      { email: "user@example.com", access_password: "123456", is_active: true, is_password_enabled: true },
     ]);
     const res = await verifyMailboxAccess("user@example.com", "123456");
     expect(res.success).toBe(true);
@@ -127,7 +127,7 @@ describe("verifyMailboxAccess", () => {
 
   it("falls back to default pin 123456 when access_pin missing", async () => {
     mockSupabase([
-      { email: "user@example.com", access_pin: null, is_active: true, is_pin_enabled: true },
+      { email: "user@example.com", access_password: null, is_active: true, is_password_enabled: true },
     ]);
     const res = await verifyMailboxAccess("user@example.com", "123456");
     expect(res.success).toBe(true);
@@ -167,14 +167,14 @@ describe("isMailboxAuthorized - Cookie Forgery Prevention", () => {
 
 describe("getMailboxPinStatus", () => {
   it("returns is_pin_enabled correctly", async () => {
-    mockSupabase([{ email: "user@example.com", is_pin_enabled: false, is_active: true }]);
+    mockSupabase([{ email: "user@example.com", is_password_enabled: false, is_active: true }]);
     const res = await getMailboxPinStatus("user@example.com");
     expect(res.exists).toBe(true);
     expect(res.is_pin_enabled).toBe(false);
   });
 
   it("defaults is_pin_enabled to true if not specified", async () => {
-    mockSupabase([{ email: "user@example.com", is_pin_enabled: null, is_active: true }]);
+    mockSupabase([{ email: "user@example.com", is_password_enabled: null, is_active: true }]);
     const res = await getMailboxPinStatus("user@example.com");
     expect(res.exists).toBe(true);
     expect(res.is_pin_enabled).toBe(true);

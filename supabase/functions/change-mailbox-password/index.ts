@@ -2,10 +2,10 @@
 //
 // Tugas:
 // 1. Validasi payload
-// 2. Cocokkan old_pin dengan access_pin di email_accounts (bukti kepemilikan mailbox)
+// 2. Cocokkan old_pin dengan access_password di email_accounts (bukti kepemilikan mailbox)
 // 3. Rate limiting: max 5x/jam per email
 // 4. Jika cocok -> update password via cPanel UAPI dengan new_pin
-// 5. Update access_pin di email_accounts
+// 5. Update access_password di email_accounts
 // 6. Return success atau error
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
     // --- Ambil data akun email ---
     const { data: account, error: accError } = await supabase
       .from("email_accounts")
-      .select("email, access_pin, is_active, is_pin_enabled")
+      .select("email, access_password, is_active, is_password_enabled")
       .eq("email", recipient_email)
       .eq("is_active", true)
       .maybeSingle();
@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const expectedPin = account.access_pin || "123456";
+    const expectedPin = account.access_password || "123456";
     const pinRegex = /^\d{6}$/;
 
     // --- Rate limiting SQL ---
@@ -123,7 +123,7 @@ Deno.serve(async (req) => {
     // --- AKSI: NONAKTIFKAN PIN SECARA MANUAL ---
     if (action === "disable_pin") {
       // Jika PIN saat ini aktif, wajib verifikasi PIN lama sebagai bukti kepemilikan
-      if (account.is_pin_enabled !== false) {
+      if (account.is_password_enabled !== false) {
         if (!old_pin) {
           return new Response(
             JSON.stringify({ error: "PIN saat ini wajib diisi untuk menonaktifkan proteksi." }),
@@ -143,7 +143,7 @@ Deno.serve(async (req) => {
 
       await supabase
         .from("email_accounts")
-        .update({ is_pin_enabled: false, updated_at: new Date().toISOString() })
+        .update({ is_password_enabled: false, updated_at: new Date().toISOString() })
         .eq("email", recipient_email);
 
       return new Response(
@@ -164,8 +164,8 @@ Deno.serve(async (req) => {
       await supabase
         .from("email_accounts")
         .update({
-          is_pin_enabled: true,
-          access_pin: activePin,
+          is_password_enabled: true,
+          access_password: activePin,
           updated_at: new Date().toISOString(),
         })
         .eq("email", recipient_email);
@@ -242,12 +242,12 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Update access_pin & ensure is_pin_enabled: true
+    // Update access_password & ensure is_password_enabled: true
     await supabase
       .from("email_accounts")
       .update({
-        access_pin: new_pin,
-        is_pin_enabled: true,
+        access_password: new_pin,
+        is_password_enabled: true,
         updated_at: new Date().toISOString(),
       })
       .eq("email", recipient_email);

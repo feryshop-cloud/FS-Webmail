@@ -49,7 +49,7 @@ export async function verifyMailboxAccess(
 
     const { data, error } = await supabase
       .from("email_accounts")
-      .select("id, email, access_pin, is_active, is_pin_enabled")
+      .select("id, email, access_password, is_active, is_password_enabled")
       .eq("email", cleanEmail)
       .eq("is_active", true)
       .maybeSingle();
@@ -75,7 +75,8 @@ export async function verifyMailboxAccess(
       };
     }
 
-    const isPinEnabled = (data as { is_pin_enabled?: boolean | null }).is_pin_enabled !== false;
+    const isPinEnabled =
+      (data as { is_password_enabled?: boolean | null }).is_password_enabled !== false;
 
     if (isPinEnabled) {
       if (!cleanPin) {
@@ -86,7 +87,7 @@ export async function verifyMailboxAccess(
         };
       }
 
-      const expectedPin = data.access_pin || "123456";
+      const expectedPin = data.access_password || "123456";
       if (cleanPin !== expectedPin) {
         recordFailedAttempt(rateLimitKey);
         return {
@@ -158,7 +159,7 @@ export async function getMailboxPinStatus(
 
     const { data, error } = await supabase
       .from("email_accounts")
-      .select("id, email, is_pin_enabled, is_active")
+      .select("id, email, is_password_enabled, is_active")
       .eq("email", cleanEmail)
       .eq("is_active", true)
       .maybeSingle();
@@ -178,7 +179,8 @@ export async function getMailboxPinStatus(
 
     return {
       exists: true,
-      is_pin_enabled: (data as { is_pin_enabled?: boolean | null }).is_pin_enabled !== false,
+      is_pin_enabled: (data as { is_password_enabled?: boolean | null }).is_password_enabled !==
+        false,
     };
   } catch (err) {
     logger.error("Unexpected error in getMailboxPinStatus", {

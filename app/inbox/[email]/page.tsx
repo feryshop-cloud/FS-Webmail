@@ -43,12 +43,12 @@ export default async function InboxPage({ params }: { params: Promise<{ email: s
   // Check PIN protection status for this mailbox
   const { data: accountData } = await supabase
     .from("email_accounts")
-    .select("is_pin_enabled")
+    .select("is_password_enabled")
     .eq("email", email)
     .maybeSingle();
 
   const initialPinEnabled =
-    (accountData as { is_pin_enabled?: boolean | null } | null)?.is_pin_enabled !== false;
+    (accountData as { is_password_enabled?: boolean | null } | null)?.is_password_enabled !== false;
 
   return (
     <div className="min-h-screen bg-slate-50 px-4 py-8">
