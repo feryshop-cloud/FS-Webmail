@@ -464,7 +464,7 @@ Remember: Good architecture enables change. Flag anything that makes future chan
 `WebMail` adalah layanan aplikasi web & background worker dalam ekosistem Feryshop. Terdiri dari 2 bagian utama:
 1. **Storefront/Viewer (`WebMail` Next.js 15 App)**: Menampilkan antarmuka inbox publik tanpa login untuk membaca email yang masuk & OTP.
 2. **Background Daemon (`imap-worker`)**: Service berbasis Node.js yang berjalan di VPS untuk menghubungkan IMAP (Postfix/Dovecot), melakukan parse/klasifikasi email, ekstraksi OTP, dan menulis langsung ke Supabase terpusat.
-3. **Supabase Edge Functions (`supabase/functions/change-mailbox-password`)**: Function serverless untuk mereset/mengganti password mailbox via cPanel UAPI dengan verifikasi OTP dan rate-limiting.
+3. **Supabase Edge Functions**: function serverless untuk operasi mailbox — `change-mailbox-password` (reset/ganti password via cPanel UAPI, verifikasi OTP + rate-limiting) dan `mailbox-email-actions` (arsip/hapus/mark-read email).
 
 ## Quick Commands (Windows PowerShell)
 
