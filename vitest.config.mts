@@ -10,5 +10,14 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["lib/**/*.test.ts", "app/**/*.test.ts"],
+    coverage: {
+      provider: "v8",
+      reporter: ["text"],
+      include: ["lib/**/*.ts", "app/actions/**/*.ts"],
+      exclude: ["**/*.test.ts", "**/*.mts"],
+      thresholds: {
+        lines: 80,
+      },
+    },
   },
 });

@@ -89,6 +89,9 @@ export async function connectIMAP() {
           path: data.path,
         });
 
+        // Dideklarasikan di luar try agar tetap terakses di blok catch (scope lintas-blok)
+        let messageId: string | undefined;
+
         try {
           const message = await client!.fetchOne(data.count, { source: true, envelope: true });
           if (!message || !message.source) {
@@ -106,7 +109,7 @@ export async function connectIMAP() {
           const sender = parsed.from?.value[0]?.address || "unknown";
           const toField = Array.isArray(parsed.to) ? parsed.to[0] : parsed.to;
           const recipient = toField?.value[0]?.address || "unknown";
-          const messageId = parsed.messageId || String(Date.now());
+          messageId = parsed.messageId || String(Date.now());
 
           logger.info("Email parsed", { subject, sender, recipient, messageId });
 
